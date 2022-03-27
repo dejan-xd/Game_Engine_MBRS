@@ -1,0 +1,9 @@
+<ProjectTemplate xmlns="http://schemas.datacontract.org/2004/07/Editor.GameProject.View_Model" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Folders xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+		<a:string>.MBRS</a:string>
+		<a:string>Content</a:string>
+		<a:string>GameCode</a:string>
+	</Folders>
+	<ProjectFile>project.mbrs</ProjectFile>
+	<ProjectType>3rd Person Project</ProjectType>
+</ProjectTemplate>
