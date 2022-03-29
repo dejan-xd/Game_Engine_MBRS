@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.Serialization;
 
-namespace Editor
+namespace Editor.Common
 {
     [DataContract(IsReference = true)]
     public class ViewModelBase : INotifyPropertyChanged
