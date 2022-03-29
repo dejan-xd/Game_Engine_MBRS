@@ -1,4 +1,4 @@
-﻿using Editor.GameProject.View_Model;
+﻿using Editor.GameProject.ViewModel;
 using Microsoft.Win32;
 using System.IO;
 using System.Windows;
@@ -7,11 +7,11 @@ using System.Windows.Controls;
 namespace Editor.GameProject
 {
     /// <summary>
-    /// Interaction logic for CreateProjectView.xaml
+    /// Interaction logic for NewProjectView.xaml
     /// </summary>
-    public partial class CreateProjectView : UserControl
+    public partial class NewProjectView : UserControl
     {
-        public CreateProjectView()
+        public NewProjectView()
         {
             InitializeComponent();
         }
@@ -24,7 +24,12 @@ namespace Editor.GameProject
             bool dialogueResult = false;
             Window window = Window.GetWindow(this);
 
-            if (!string.IsNullOrEmpty(projectPath)) dialogueResult = true;
+            if (!string.IsNullOrEmpty(projectPath))
+            {
+                dialogueResult = true;
+                Project project = OpenProject.Open(new ProjectData() { ProjectName = newProject.ProjectName, ProjectPath = projectPath });
+                window.DataContext = project;
+            }
             window.DialogResult = dialogueResult;
             window.Close();
         }
@@ -35,7 +40,7 @@ namespace Editor.GameProject
             if (sfd.ShowDialog() == true)
             {
                 NewProject newProject = DataContext as NewProject;
-                newProject.ProjectPath = Path.GetDirectoryName(sfd.FileName) + @"\";
+                newProject.ProjectPath = Path.GetDirectoryName(sfd.FileName) + @"";
                 newProject.ProjectName = Path.GetFileNameWithoutExtension(sfd.FileName);
             }
         }

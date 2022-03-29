@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization;
 
-namespace Editor.GameProject.Utilities
+namespace Editor.Utilities
 {
     public static class Serializer
     {
