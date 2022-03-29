@@ -1,5 +1,6 @@
 ﻿using Editor.GameProject;
-using System;
+using Editor.GameProject.ViewModel;
+using System.ComponentModel;
 using System.Windows;
 
 namespace Editor
@@ -13,7 +14,7 @@ namespace Editor
         {
             InitializeComponent();
             Loaded += OnMainWindowLoaded;
-
+            Closing += OnMainWindowClosing;
         }
 
         private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
@@ -22,16 +23,23 @@ namespace Editor
             OpenProjectBrowsingDialog();
         }
 
-        private static void OpenProjectBrowsingDialog()
+        private void OnMainWindowClosing(object sender, CancelEventArgs e)
         {
-            ProjectBrowsingDialog projBroser = new();
-            if (projBroser.ShowDialog() == false)
+            Closing -= OnMainWindowClosing;
+            Project.Current?.Unload();
+        }
+
+        private void OpenProjectBrowsingDialog()
+        {
+            ProjectBrowsingDialog projectBroser = new();
+            if (projectBroser.ShowDialog() == false || projectBroser.DataContext == null)
             {
                 Application.Current.Shutdown();
             }
             else
             {
-                Console.WriteLine("TODO");
+                Project.Current?.Unload();
+                DataContext = projectBroser.DataContext;
             }
         }
     }

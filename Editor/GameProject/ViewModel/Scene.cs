@@ -1,10 +1,10 @@
-﻿using Editor.GameProject.View;
+﻿using Editor.Common;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
-namespace Editor.GameProject.View_Model
+namespace Editor.GameProject.ViewModel
 {
-    [DataContract(Namespace = "http://schemas.datacontract.org/2004/07/Editor.GameProject")]
+    [DataContract(Namespace = "http://schemas.datacontract.org/2004/07/Editor.GameProject%22")]
     public class Scene : ViewModelBase
     {
         private string _name;
@@ -24,6 +24,21 @@ namespace Editor.GameProject.View_Model
 
         [DataMember]
         public Project Project { get; private set; }
+
+        private bool _isActive;
+        [DataMember]
+        public bool IsActive
+        {
+            get => _isActive;
+            set
+            {
+                if (_isActive != value)
+                {
+                    _isActive = value;
+                    OnPropertyChanged(nameof(IsActive));
+                }
+            }
+        }
 
         public Scene(Project project, string name)
         {

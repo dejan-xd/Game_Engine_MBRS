@@ -1,5 +1,5 @@
-﻿using Editor.GameProject.Utilities;
-using Editor.GameProject.View;
+﻿using Editor.Common;
+using Editor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 
-namespace Editor.GameProject.View_Model
+namespace Editor.GameProject.ViewModel
 {
     [DataContract]
     public class ProjectTemplate
@@ -179,5 +179,4 @@ namespace Editor.GameProject.View_Model
             }
         }
     }
-
 }
