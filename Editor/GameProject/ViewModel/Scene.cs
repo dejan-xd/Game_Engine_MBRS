@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 
 namespace Editor.GameProject.ViewModel
 {
-    [DataContract(Namespace = "http://schemas.datacontract.org/2004/07/Editor.GameProject%22")]
+    [DataContract(Namespace = "http://schemas.datacontract.org/2004/07/Editor.GameProject")]
     public class Scene : ViewModelBase
     {
         private string _name;
