@@ -9,91 +9,96 @@ using System.Runtime.Serialization;
 
 namespace Editor.GameProject.ViewModel
 {
-    [DataContract]
-    public class ProjectData
-    {
-        [DataMember]
-        public string ProjectName { get; set; }
-        [DataMember]
-        public string ProjectPath { get; set; }
-        [DataMember]
-        public DateTime Date { get; set; }
-        public string FullPath => $"{ProjectPath}{ProjectName}{Project.Extension}";
-        public byte[] Icon { get; set; }
-        public byte[] Screenshot { get; set; }
-    }
+	[DataContract]
+	public class ProjectData
+	{
+		[DataMember]
+		public string ProjectName { get; set; }
+		[DataMember]
+		public string ProjectPath { get; set; }
+		[DataMember]
+		public DateTime Date { get; set; }
+		public string FullPath => $"{ProjectPath}{ProjectName}{Project.Extension}";
+		public byte[] Icon { get; set; }
+		public byte[] Screenshot { get; set; }
+	}
 
-    [DataContract]
-    public class ProjectDataList
-    {
-        [DataMember]
-        public List<ProjectData> Projects { get; set; }
-    }
+	[DataContract]
+	public class ProjectDataList
+	{
+		[DataMember]
+		public List<ProjectData> Projects { get; set; }
+	}
 
-    public class OpenProject
-    {
-        private static readonly string _applicationDataPath = $@"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\GameEngine\";
-        private static readonly string _projectDataPath;
-        private static readonly ObservableCollection<ProjectData> _projects = new();
-        public static ReadOnlyObservableCollection<ProjectData> Projects { get; }
+	public class OpenProject
+	{
+		private static readonly string _applicationDataPath = $@"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\GameEngine\";
+		private static readonly string _projectDataPath;
+		private static readonly ObservableCollection<ProjectData> _projects = new();
+		public static ReadOnlyObservableCollection<ProjectData> Projects { get; }
 
-        private static void ReadProjectData()
-        {
-            if (File.Exists(_projectDataPath))
-            {
-                IOrderedEnumerable<ProjectData> projects = Serializer.FromFile<ProjectDataList>(_projectDataPath).Projects.OrderByDescending(x => x.Date);
-                _projects.Clear();
-                foreach (ProjectData project in projects)
-                {
-                    if (File.Exists(project.FullPath))
-                    {
-                        project.Icon = File.ReadAllBytes($@"{project.ProjectPath}\.MBRS\Icon.ico");
-                        project.Screenshot = File.ReadAllBytes($@"{project.ProjectPath}\.MBRS\Screenshot.png");
-                        _projects.Add(project);
-                    }
-                }
-            }
-        }
+		private static void ReadProjectData()
+		{
+			if (File.Exists(_projectDataPath))
+			{
+				IOrderedEnumerable<ProjectData> projects = Serializer.FromFile<ProjectDataList>(_projectDataPath).Projects.OrderByDescending(x => x.Date);
+				_projects.Clear();
 
-        private static void WriteProjectData()
-        {
-            List<ProjectData> projects = _projects.OrderBy(x => x.Date).ToList();
-            Serializer.ToFile(new ProjectDataList() { Projects = projects }, _projectDataPath);
-        }
+				foreach (ProjectData project in projects)
+				{
+					if (File.Exists(project.FullPath))
+					{
+						project.Icon = File.ReadAllBytes($@"{project.ProjectPath}\.MBRS\Icon.ico");
+						project.Screenshot = File.ReadAllBytes($@"{project.ProjectPath}\.MBRS\Screenshot.png");
+						_projects.Add(project);
+					}
+				}
+			}
+		}
 
-        public static Project Open(ProjectData data)
-        {
-            ReadProjectData();
-            ProjectData project = _projects.FirstOrDefault(x => x.FullPath == data.FullPath);
-            if (project != null)
-            {
-                project.Date = DateTime.Now;
-            }
-            else
-            {
-                project = data;
-                project.Date = DateTime.Now;
-                _projects.Add(project);
-            }
-            WriteProjectData();
+		private static void WriteProjectData()
+		{
+			List<ProjectData> projects = _projects.OrderBy(x => x.Date).ToList();
+			Serializer.ToFile(new ProjectDataList() { Projects = projects }, _projectDataPath);
+		}
 
-            return Project.Load(project.FullPath);
-        }
+		public static Project Open(ProjectData data)
+		{
+			ReadProjectData();
 
-        static OpenProject()
-        {
-            try
-            {
-                if (!Directory.Exists(_applicationDataPath)) Directory.CreateDirectory(_applicationDataPath);
-                _projectDataPath = $@"{_applicationDataPath}ProjectData.xml";
-                Projects = new ReadOnlyObservableCollection<ProjectData>(_projects);
-                ReadProjectData();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-                // TODO: log errors
-            }
-        }
-    }
+			ProjectData project = _projects.FirstOrDefault(x => x.FullPath == data.FullPath);
+			if (project != null)
+			{
+				project.Date = DateTime.Now;
+			}
+			else
+			{
+				project = data;
+				project.Date = DateTime.Now;
+				_projects.Add(project);
+			}
+			WriteProjectData();
+
+			return Project.Load(project.FullPath);
+		}
+
+		static OpenProject()
+		{
+			try
+			{
+				if (!Directory.Exists(_applicationDataPath)) Directory.CreateDirectory(_applicationDataPath);
+
+				_projectDataPath = $@"{_applicationDataPath}ProjectData.xml";
+				Projects = new ReadOnlyObservableCollection<ProjectData>(_projects);
+
+				ReadProjectData();
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine(ex);
+				Logger.Log(MessageType.Error, $"OpenProject : Failed to read project data. {ex.Message}");
+				throw;
+			}
+		}
+	}
 }
