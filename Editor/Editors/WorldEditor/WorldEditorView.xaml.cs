@@ -11,5 +11,10 @@ namespace Editor.Editors
         {
             InitializeComponent();
         }
-    }
+
+		private void LoggerView_Loaded(object sender, System.Windows.RoutedEventArgs e)
+		{
+
+		}
+	}
 }
