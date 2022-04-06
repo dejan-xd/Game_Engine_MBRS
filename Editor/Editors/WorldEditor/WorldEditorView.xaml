@@ -21,15 +21,22 @@
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
-                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
-                <utility:UndoRedoView DataContext="{Binding UndoRedo}" Grid.Row="1"/>
-            </Grid>
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Left" VerticalAlignment="Stretch"/>
+			<Grid Grid.Column="0">
+				<Grid.RowDefinitions>
+					<RowDefinition/>
+					<RowDefinition/>
+				</Grid.RowDefinitions>
+				<GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
+				<TabControl Grid.Row="1">
+					<TabItem Header="History">
+						<utility:UndoRedoView DataContext="{Binding UndoRedo}"/>
+					</TabItem>
+					<TabItem Header="Log">
+						<utility:LoggerView Loaded="LoggerView_Loaded"/>
+					</TabItem>
+				</TabControl>
+			</Grid>
+			<GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Left" VerticalAlignment="Stretch"/>
             <Grid Grid.Column="1" Margin="5,0,0,0">
                 <Grid.RowDefinitions>
                     <RowDefinition/>
