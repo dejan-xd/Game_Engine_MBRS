@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using Editor.GameProject.ViewModel;
+using System.Linq;
+using System.Windows;
 
 namespace Editor.GameProject
 {
@@ -10,6 +12,18 @@ namespace Editor.GameProject
         public ProjectBrowsingDialog()
         {
             InitializeComponent();
+            Loaded += OnProjectBrowserDialogLoaded;
+        }
+
+        private void OnProjectBrowserDialogLoaded(object sender, RoutedEventArgs e)
+        {
+            Loaded -= OnProjectBrowserDialogLoaded;
+            if (!OpenProject.Projects.Any())
+            {
+                openProjBtn.IsEnabled = false;
+                openProjectView.Visibility = Visibility.Hidden;
+                OpenProjBtn_Click(createProjBtn, new RoutedEventArgs());
+            }
         }
 
         private void OpenProjBtn_Click(object sender, RoutedEventArgs e)
