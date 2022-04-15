@@ -1,6 +1,7 @@
 ﻿using Editor.Common;
 using Editor.GameProject.ViewModel;
 using Editor.Utilities;
+using Editor.WrappersDLL;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -37,15 +38,15 @@ namespace Editor.Components
                 if (_isActive != value)
                 {
                     _isActive = value;
-                    //if (_isActive)
-                    //{
-                    //    EntityId = EngineAPI.CreateGameEntity(this);
-                    //    Debug.Assert(ID.IsValid(_entityId));
-                    //}
-                    //else
-                    //{
-                    //    EngineAPI.RemoveGameEntity(this);
-                    //}
+                    if (_isActive)
+                    {
+                        EntityId = EngineAPI.CreateGameEntity(this);
+                        Debug.Assert(ID.IsValid(_entityId));
+                    }
+                    else
+                    {
+                        EngineAPI.RemoveGameEntity(this);
+                    }
 
                     OnPropertyChanged(nameof(IsActive));
                 }
