@@ -71,7 +71,7 @@ namespace Editor.GameProject.ViewModel
             return Serializer.FromFile<Project>(file);
         }
 
-        public void Unload()
+        public static void Unload()
         {
             UndoRedo.Reset();
         }
