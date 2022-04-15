@@ -7,7 +7,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Windows.Input;
 
 namespace Editor.Components
 {
@@ -15,6 +14,44 @@ namespace Editor.Components
     [KnownType(typeof(Transform))]
     internal class GameEntity : ViewModelBase
     {
+        private int _entityId = ID.INVALID_ID;
+        public int EntityId
+        {
+            get => _entityId;
+            set
+            {
+                if (_entityId != value)
+                {
+                    _entityId = value;
+                    OnPropertyChanged(nameof(EntityId));
+                }
+            }
+        }
+
+        private bool _isActive;
+        public bool IsActive
+        {
+            get => _isActive;
+            set
+            {
+                if (_isActive != value)
+                {
+                    _isActive = value;
+                    //if (_isActive)
+                    //{
+                    //    EntityId = EngineAPI.CreateGameEntity(this);
+                    //    Debug.Assert(ID.IsValid(_entityId));
+                    //}
+                    //else
+                    //{
+                    //    EngineAPI.RemoveGameEntity(this);
+                    //}
+
+                    OnPropertyChanged(nameof(IsActive));
+                }
+            }
+        }
+
         private bool _isEnabled = true;
         [DataMember]
         public bool IsEnabled
@@ -51,6 +88,9 @@ namespace Editor.Components
         [DataMember(Name = nameof(Components))]
         private readonly ObservableCollection<Component> _components = new();
         public ReadOnlyObservableCollection<Component> Components { get; private set; }
+
+        public Component GetComponent(Type type) => Components.FirstOrDefault(x => x.GetType() == type);
+        public T GetComponent<T>() where T : Component => GetComponent(typeof(T)) as T; // for casting
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
