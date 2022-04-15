@@ -2,7 +2,7 @@
 #include "CommonHeaders.h"
 
 namespace primal::math {
-	constexpr float pi = 3.1415926535897932384626433832795028841971;
+	constexpr float pi = 3.1415926535897932384626433832795028841971f;
 	constexpr float epsilon = 1e-5f;
 
 #if defined(_WIN64)
