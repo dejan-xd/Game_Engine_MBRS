@@ -35,11 +35,11 @@
                     <ColumnDefinition/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="Name" Grid.Column="0" Margin="5,0,0,0"/>
+                <TextBlock Text="Name" Grid.Column="0" Margin="5,0,0,0" Style="{StaticResource LightTextBlockStyle}"/>
                 <TextBox Text="{Binding Name}" Grid.Column="1" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                          LostKeyboardFocus="TextBox_LostKeyboardFocus"/>
                 <StackPanel Orientation="Horizontal" Grid.Column="2">
-                    <TextBlock Text="Enabled" Margin="5,0,0,0"/>
+                    <TextBlock Text="Enabled" Margin="5,0,0,0" Style="{StaticResource LightTextBlockStyle}"/>
                     <CheckBox IsChecked="{Binding IsEnabled, Mode=OneWay}" 
                               Click="CheckBox_Click"
                               Margin="5,0,0,0" VerticalAlignment="Center"/>

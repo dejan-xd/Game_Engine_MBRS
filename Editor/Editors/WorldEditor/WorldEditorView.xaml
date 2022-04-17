@@ -33,8 +33,8 @@
                     <RowDefinition/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
-                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
-                <TabControl Grid.Row="1">
+                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="Transparent"/>
+                <TabControl Grid.Row="1" Background="{StaticResource Editor.Window.GrayBrush2}" Margin="0,5,0,0">
                     <TabItem Header="History">
                         <utility:UndoRedoView DataContext="{Binding UndoRedo}"/>
                     </TabItem>
@@ -43,15 +43,15 @@
                     </TabItem>
                 </TabControl>
             </Grid>
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Left" VerticalAlignment="Stretch"/>
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Left" VerticalAlignment="Stretch" Background="Transparent"/>
             <Grid Grid.Column="1" Margin="5,0,0,0">
                 <Grid.RowDefinitions>
                     <RowDefinition/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
                 <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
-                <local:ProjectLayoutView/>
-                <local:GameEntityView Grid.Row="1"/>
+                <local:ProjectLayoutView Background="{StaticResource Editor.Window.GrayBrush3}"/>
+                <local:GameEntityView Grid.Row="1" Background="{StaticResource Editor.Window.GrayBrush3}" Margin="0,5,0,0"/>
             </Grid>
         </Grid>
     </Grid>
