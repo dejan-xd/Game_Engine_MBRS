@@ -9,6 +9,14 @@ namespace primal::script {
 		utl::vector<id::generation_type> generations;
 		utl::vector<script_id> free_ids;
 
+		using script_registery = std::unordered_map<size_t, detail::script_creator>;
+		script_registery& registery() {
+			// NOTE: I put this static variable in a function because of the initialization order of static data.
+			//		 This way, I can be certain that the data is initialized before accessing it.
+			static script_registery reg;
+			return reg;
+		}
+
 		bool exists(script_id id) {
 			assert(id::is_valid(id));
 			const id::id_type index{ id::index(id) };
@@ -20,6 +28,14 @@ namespace primal::script {
 				entity_scripts[id_mapping[index]]->is_valid();
 		}
 	}	// anonymous namespace
+
+	namespace detail {
+		u8 register_script(size_t tag, script_creator func) {
+			bool result{ registery().insert(script_registery::value_type{tag, func}).second };
+			assert(result);
+			return result;
+		}
+	}	// detail namespace
 
 	component create(init_info info, game_entity::entity entity) {
 		assert(entity.is_valid());
