@@ -1,4 +1,5 @@
-﻿using Editor.GameProject.ViewModel;
+﻿using Editor.GameDev;
+using Editor.GameProject.ViewModel;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
@@ -21,6 +22,11 @@ namespace Editor.Editors
             Loaded -= OnWorldEditorViewLoaded;
             Focus();
             ((INotifyCollectionChanged)Project.UndoRedo.UndoList).CollectionChanged += (s, e) => Focus();
+        }
+
+        private void OnNewScript_Button_Click(object sender, RoutedEventArgs e)
+        {
+            new NewScriptDialog().ShowDialog();
         }
     }
 }

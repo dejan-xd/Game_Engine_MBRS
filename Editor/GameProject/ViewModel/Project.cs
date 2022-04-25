@@ -1,4 +1,5 @@
 ﻿using Editor.Common;
+using Editor.GameDev;
 using Editor.Utilities;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -21,7 +22,9 @@ namespace Editor.GameProject.ViewModel
         [DataMember]
         public string Path { get; private set; }
 
-        public string FullPath => $@"{Path}{Name}\{Name}{Extension}";
+        public string FullPath => $@"{Path}{Name}{Extension}";
+
+        public string Solution => $@"{Path}{Name}.sln";
 
         [DataMember(Name = "Scenes")]
         private readonly ObservableCollection<Scene> _scenes = new();
@@ -73,6 +76,7 @@ namespace Editor.GameProject.ViewModel
 
         public static void Unload()
         {
+            VisualStudio.CloseVisualStudio();
             UndoRedo.Reset();
         }
 
