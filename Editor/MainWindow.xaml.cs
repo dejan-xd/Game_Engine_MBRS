@@ -28,9 +28,8 @@ namespace Editor
             OpenProjectBrowsingDialog();
         }
 
-        private void GetEnginePath()
+        private static void GetEnginePath()
         {
-            //  enginePath is path to .sln of the project (e.g. ..\Desktop\MBRS\Project)
             string enginePath = Environment.GetEnvironmentVariable("GAME_ENGINE", EnvironmentVariableTarget.User);
             if (enginePath == null || !Directory.Exists(Path.Combine(enginePath, @"Engine\EngineAPI")))
             {
