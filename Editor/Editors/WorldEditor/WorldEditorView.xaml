@@ -7,9 +7,14 @@
              xmlns:utility="clr-namespace:Editor.Utilities"
              xmlns:controls="clr-namespace:Editor.Utilities.Controls"
              xmlns:viewmodel="clr-namespace:Editor.GameProject.ViewModel" 
+             xmlns:sys="clr-namespace:System;assembly=mscorlib" 
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance Type=viewmodel:Project}">
+    <UserControl.Resources>
+        <sys:Boolean x:Key="True">True</sys:Boolean>
+        <sys:Boolean x:Key="False">False</sys:Boolean>
+    </UserControl.Resources>
     <UserControl.InputBindings>
         <KeyBinding Command="{Binding UndoCommand}" Key="Z" Modifiers="Ctrl"/>
         <KeyBinding Command="{Binding RedoCommand}" Key="Y" Modifiers="Ctrl"/>
@@ -23,7 +28,14 @@
         <StackPanel Orientation="Horizontal">
             <Button Content="Undo" Command="{Binding UndoCommand}"/>
             <Button Content="Redo" Command="{Binding RedoCommand}" Margin="5,0" />
-            <Button Content="New Script" Click="OnNewScript_Button_Click"/>
+            <Button Content="New Script" Click="OnNewScript_Button_Click"
+                    IsEnabled="{Binding Path=IsEnabled, ElementName=buildbutton}"/>
+            <Button Content="Build" x:Name="buildbutton" Margin="5,0" Command="{Binding BuildCommand}"
+                    CommandParameter="{StaticResource True}"/>
+            <ComboBox x:Name="runConfig" VerticalAlignment="Center" Width="72" SelectedIndex="{Binding BuildConfig}">
+                <ComboBoxItem Content="Debug"/>
+                <ComboBoxItem Content="Release"/>
+            </ComboBox>
         </StackPanel>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -48,14 +60,17 @@
                     </StackPanel>
                 </Border>
                 <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="Transparent"/>
-                <TabControl Grid.Row="1" Background="{StaticResource Editor.Window.GrayBrush2}" Margin="0,5,0,0">
-                    <TabItem Header="History">
-                        <utility:UndoRedoView DataContext="{Binding UndoRedo}"/>
-                    </TabItem>
-                    <TabItem Header="Log">
-                        <utility:LoggerView/>
-                    </TabItem>
-                </TabControl>
+                <Grid Grid.Row="1" Margin="0,5,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <utility:UndoRedoView DataContext="{Binding UndoRedo}" Grid.Column="0"
+                                          Background="{StaticResource Editor.Window.GrayBrush2}"/>
+                    <GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch" HorizontalAlignment="Left"
+                                  Background="Transparent"/>
+                    <utility:LoggerView Grid.Column="1" Margin="5,0,0,0"/>
+                </Grid>
             </Grid>
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Left" VerticalAlignment="Stretch" Background="Transparent"/>
             <Grid Grid.Column="1" Margin="5,0,0,0">
