@@ -1,6 +1,7 @@
 ﻿using Editor.Common;
 using Editor.GameDev;
 using Editor.Utilities;
+using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -11,20 +12,43 @@ using System.Windows.Input;
 
 namespace Editor.GameProject.ViewModel
 {
+    public enum BuildConfiguration
+    {
+        Debug,
+        DebugEditor,
+        Release,
+        ReleaseEditor,
+    }
+
     [DataContract(Name = "Game", Namespace = "http://schemas.datacontract.org/2004/07/Editor.GameProject")]
     internal class Project : ViewModelBase
     {
+        // PROPERTIES
         public static string Extension { get; } = ".mbrs";
-
         [DataMember]
         public string Name { get; private set; } = "New Project";
-
         [DataMember]
         public string Path { get; private set; }
-
         public string FullPath => $@"{Path}{Name}{Extension}";
-
         public string Solution => $@"{Path}{Name}.sln";
+
+        private static readonly string[] _buildConfigurationNames = new string[] { "Debug", "DebugEditor", "Release", "ReleaseEditor" };
+        private int _buildConfig;
+        [DataMember]
+        public int BuildConfig
+        {
+            get => _buildConfig;
+            set
+            {
+                if (_buildConfig != value)
+                {
+                    _buildConfig = value;
+                    OnPropertyChanged(nameof(BuildConfig));
+                }
+            }
+        }
+        public BuildConfiguration StandAloneBuildConfig => BuildConfig == 0 ? BuildConfiguration.Debug : BuildConfiguration.Release;
+        public BuildConfiguration DllBuildConfig => BuildConfig == 0 ? BuildConfiguration.DebugEditor : BuildConfiguration.ReleaseEditor;
 
         [DataMember(Name = "Scenes")]
         private readonly ObservableCollection<Scene> _scenes = new();
@@ -48,13 +72,18 @@ namespace Editor.GameProject.ViewModel
 
         public static UndoRedo UndoRedo { get; } = new UndoRedo();
 
+        // COMMANDS
+
         public ICommand UndoCommand { get; private set; }
         public ICommand RedoCommand { get; private set; }
         public ICommand AddSceneCommand { get; private set; }
         public ICommand RemoveSceneCommand { get; private set; }
         public ICommand SaveCommand { get; private set; }
+        public ICommand BuildCommand { get; private set; }
 
         // METHODS
+
+        private static string GetConfigurationName(BuildConfiguration config) => _buildConfigurationNames[(int)config];
 
         private void AddScene(string sceneName)
         {
@@ -84,6 +113,33 @@ namespace Editor.GameProject.ViewModel
         {
             Serializer.ToFile(project, project.FullPath);
             Logger.Log(MessageType.Info, $"Project saved to {project.FullPath}");
+        }
+
+        private void BuildGameCodeDll(bool showWindow = true)
+        {
+            try
+            {
+                UnloadGameCodeDll();
+                VisualStudio.BuildSolution(this, GetConfigurationName(DllBuildConfig), showWindow);
+                if (VisualStudio.BuildSucceeded)
+                {
+                    LoadGameCodeDll();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                throw;
+            }
+
+        }
+
+        private void UnloadGameCodeDll()
+        {
+        }
+
+        private void LoadGameCodeDll()
+        {
         }
 
         [OnDeserialized]
@@ -119,9 +175,10 @@ namespace Editor.GameProject.ViewModel
                     $"Remove {x.Name}"));
             }, x => !x.IsActive);
 
-            UndoCommand = new RelayCommand<object>(x => UndoRedo.Undo());
-            RedoCommand = new RelayCommand<object>(x => UndoRedo.Redo());
+            UndoCommand = new RelayCommand<object>(x => UndoRedo.Undo(), x => UndoRedo.UndoList.Any());
+            RedoCommand = new RelayCommand<object>(x => UndoRedo.Redo(), x => UndoRedo.RedoList.Any());
             SaveCommand = new RelayCommand<object>(x => Save(this));
+            BuildCommand = new RelayCommand<bool>(x => BuildGameCodeDll(x), x => !VisualStudio.IsDebugging() && VisualStudio.BuildDone);
         }
 
         public Project(string name, string path)

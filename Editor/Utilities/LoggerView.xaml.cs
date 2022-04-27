@@ -11,14 +11,6 @@ namespace Editor.Utilities
         public LoggerView()
         {
             InitializeComponent();
-
-            // TODO: remove this
-            Loaded += (s, e) =>
-            {
-                Logger.Log(MessageType.Info, "Information message");
-                Logger.Log(MessageType.Warning, "Warning message");
-                Logger.Log(MessageType.Error, "Error message");
-            };
         }
 
         private void ClearBtn_Click(object sender, RoutedEventArgs e)
