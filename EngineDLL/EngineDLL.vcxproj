@@ -171,7 +171,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EngineAPI.cpp" />
+    <ClCompile Include="EntityAPI.cpp" />
     <ClCompile Include="MainDLL.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Common.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

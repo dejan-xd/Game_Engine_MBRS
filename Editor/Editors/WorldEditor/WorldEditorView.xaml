@@ -28,7 +28,8 @@
         <StackPanel Orientation="Horizontal">
             <Button Content="Undo" Command="{Binding UndoCommand}"/>
             <Button Content="Redo" Command="{Binding RedoCommand}" Margin="5,0" />
-            <Button Content="New Script" Click="OnNewScript_Button_Click"/>
+            <Button Content="New Script" Click="OnNewScript_Button_Click"
+                    IsEnabled="{Binding Path=IsEnabled, ElementName=buildbutton}"/>
             <Button Content="Build" x:Name="buildbutton" Margin="5,0" Command="{Binding BuildCommand}"
                     CommandParameter="{StaticResource True}"/>
             <ComboBox x:Name="runConfig" VerticalAlignment="Center" Width="72" SelectedIndex="{Binding BuildConfig}">
