@@ -40,12 +40,12 @@ namespace Editor.Components
                     _isActive = value;
                     if (_isActive)
                     {
-                        EntityId = EngineAPI.CreateGameEntity(this);
+                        EntityId = EngineAPI.EntityAPI.CreateGameEntity(this);
                         Debug.Assert(ID.IsValid(_entityId));
                     }
                     else
                     {
-                        EngineAPI.RemoveGameEntity(this);
+                        EngineAPI.EntityAPI.RemoveGameEntity(this);
                     }
 
                     OnPropertyChanged(nameof(IsActive));

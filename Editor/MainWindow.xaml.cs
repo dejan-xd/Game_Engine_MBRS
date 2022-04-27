@@ -53,8 +53,7 @@ namespace Editor
         private void OnMainWindowClosing(object sender, CancelEventArgs e)
         {
             Closing -= OnMainWindowClosing;
-            //Project.Current?.Unload();
-            Project.Unload();
+            Project.Current?.Unload();
         }
 
         private void OpenProjectBrowsingDialog()
@@ -66,8 +65,7 @@ namespace Editor
             }
             else
             {
-                //Project.Current?.Unload();
-                Project.Unload();
+                Project.Current?.Unload();
                 DataContext = projectBroser.DataContext;
             }
         }

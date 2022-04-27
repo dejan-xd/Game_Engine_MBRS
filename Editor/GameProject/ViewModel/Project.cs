@@ -1,12 +1,14 @@
 ﻿using Editor.Common;
 using Editor.GameDev;
 using Editor.Utilities;
+using Editor.WrappersDLL;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -83,75 +85,8 @@ namespace Editor.GameProject.ViewModel
 
         // METHODS
 
-        private static string GetConfigurationName(BuildConfiguration config) => _buildConfigurationNames[(int)config];
-
-        private void AddScene(string sceneName)
+        private void SetCommands()
         {
-            Debug.Assert(!string.IsNullOrEmpty(sceneName.Trim()));
-            _scenes.Add(new Scene(this, sceneName));
-        }
-
-        public void RemoveScene(Scene scene)
-        {
-            Debug.Assert(_scenes.Contains(scene));
-            _scenes.Remove(scene);
-        }
-
-        public static Project Load(string file)
-        {
-            Debug.Assert(File.Exists(file));
-            return Serializer.FromFile<Project>(file);
-        }
-
-        public static void Unload()
-        {
-            VisualStudio.CloseVisualStudio();
-            UndoRedo.Reset();
-        }
-
-        public static void Save(Project project)
-        {
-            Serializer.ToFile(project, project.FullPath);
-            Logger.Log(MessageType.Info, $"Project saved to {project.FullPath}");
-        }
-
-        private void BuildGameCodeDll(bool showWindow = true)
-        {
-            try
-            {
-                UnloadGameCodeDll();
-                VisualStudio.BuildSolution(this, GetConfigurationName(DllBuildConfig), showWindow);
-                if (VisualStudio.BuildSucceeded)
-                {
-                    LoadGameCodeDll();
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-                throw;
-            }
-
-        }
-
-        private void UnloadGameCodeDll()
-        {
-        }
-
-        private void LoadGameCodeDll()
-        {
-        }
-
-        [OnDeserialized]
-        private void OnDeserialized(StreamingContext context)
-        {
-            if (_scenes != null)
-            {
-                Scenes = new ReadOnlyObservableCollection<Scene>(_scenes);
-                OnPropertyChanged(nameof(Scenes));
-            }
-            ActiveScene = Scenes.FirstOrDefault(x => x.IsActive);
-
             AddSceneCommand = new RelayCommand<object>(x =>
             {
                 AddScene($"New Scene {_scenes.Count}");
@@ -178,7 +113,103 @@ namespace Editor.GameProject.ViewModel
             UndoCommand = new RelayCommand<object>(x => UndoRedo.Undo(), x => UndoRedo.UndoList.Any());
             RedoCommand = new RelayCommand<object>(x => UndoRedo.Redo(), x => UndoRedo.RedoList.Any());
             SaveCommand = new RelayCommand<object>(x => Save(this));
-            BuildCommand = new RelayCommand<bool>(x => BuildGameCodeDll(x), x => !VisualStudio.IsDebugging() && VisualStudio.BuildDone);
+            BuildCommand = new RelayCommand<bool>(async x => await BuildGameCodeDll(x), x => !VisualStudio.IsDebugging() && VisualStudio.BuildDone);
+
+            OnPropertyChanged(nameof(UndoCommand));
+            OnPropertyChanged(nameof(RedoCommand));
+            OnPropertyChanged(nameof(AddSceneCommand));
+            OnPropertyChanged(nameof(RemoveSceneCommand));
+            OnPropertyChanged(nameof(SaveCommand));
+            OnPropertyChanged(nameof(BuildCommand));
+        }
+
+        private static string GetConfigurationName(BuildConfiguration config) => _buildConfigurationNames[(int)config];
+
+        private void AddScene(string sceneName)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(sceneName.Trim()));
+            _scenes.Add(new Scene(this, sceneName));
+        }
+
+        public void RemoveScene(Scene scene)
+        {
+            Debug.Assert(_scenes.Contains(scene));
+            _scenes.Remove(scene);
+        }
+
+        public static Project Load(string file)
+        {
+            Debug.Assert(File.Exists(file));
+            return Serializer.FromFile<Project>(file);
+        }
+
+        public void Unload()
+        {
+            // NOTE: dont make it static
+            VisualStudio.CloseVisualStudio();
+            UndoRedo.Reset();
+        }
+
+        public static void Save(Project project)
+        {
+            Serializer.ToFile(project, project.FullPath);
+            Logger.Log(MessageType.Info, $"Project saved to {project.FullPath}");
+        }
+
+        private async Task BuildGameCodeDll(bool showWindow = true)
+        {
+            try
+            {
+                UnloadGameCodeDll();
+                await Task.Run(() => VisualStudio.BuildSolution(this, GetConfigurationName(DllBuildConfig), showWindow));
+                if (VisualStudio.BuildSucceeded)
+                {
+                    LoadGameCodeDll();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                throw;
+            }
+
+        }
+
+        private void LoadGameCodeDll()
+        {
+            string configName = GetConfigurationName(DllBuildConfig);
+            string dll = $@"{Path}x64\{configName}\{Name}.dll";
+            if (File.Exists(dll) && EngineAPI.LoadGameCodeDll(dll) != 0)
+            {
+                Logger.Log(MessageType.Info, "Game code DLL loaded successfully");
+            }
+            else
+            {
+                Logger.Log(MessageType.Warning, "Failed to load the game code DLL file. Try to build the project first");
+            }
+        }
+
+        private void UnloadGameCodeDll()
+        {
+            if (EngineAPI.UnloadGameCodeDll() != 0)
+            {
+                Logger.Log(MessageType.Info, "Game code DLL unloaded");
+            }
+        }
+
+        [OnDeserialized]
+        private async void OnDeserialized(StreamingContext context)
+        {
+            if (_scenes != null)
+            {
+                Scenes = new ReadOnlyObservableCollection<Scene>(_scenes);
+                OnPropertyChanged(nameof(Scenes));
+            }
+            ActiveScene = Scenes.FirstOrDefault(x => x.IsActive);
+
+            await BuildGameCodeDll(false);
+
+            SetCommands();
         }
 
         public Project(string name, string path)
