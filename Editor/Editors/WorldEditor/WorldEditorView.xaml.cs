@@ -21,7 +21,6 @@ namespace Editor.Editors
         {
             Loaded -= OnWorldEditorViewLoaded;
             Focus();
-            ((INotifyCollectionChanged)Project.UndoRedo.UndoList).CollectionChanged += (s, e) => Focus();
         }
 
         private void OnNewScript_Button_Click(object sender, RoutedEventArgs e)
