@@ -59,6 +59,10 @@ namespace Editor.Dictionaries
         private void OnTextBoxRename_LostFocus(object sender, RoutedEventArgs e)
         {
             TextBox textBox = sender as TextBox;
+            if (!textBox.IsVisible) 
+            {
+                return;
+            }
             var expression = textBox.GetBindingExpression(TextBox.TextProperty);
             if (expression != null)
             {
