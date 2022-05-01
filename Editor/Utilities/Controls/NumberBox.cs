@@ -53,7 +53,6 @@ namespace Editor.Utilities.Controls
             _captured = true;
             _valueChanged = false;
             e.Handled = true;
-
             _mouseXStart = e.GetPosition(this).X;
             Focus();
         }

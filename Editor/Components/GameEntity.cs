@@ -40,12 +40,13 @@ namespace Editor.Components
                     _isActive = value;
                     if (_isActive)
                     {
-                        EntityId = EngineAPI.EntityAPI.CreateGameEntity(this);
+                        EntityId = EngineAPI.CreateGameEntity(this);
                         Debug.Assert(ID.IsValid(_entityId));
                     }
-                    else
+                    else if (ID.IsValid(EntityId))
                     {
-                        EngineAPI.EntityAPI.RemoveGameEntity(this);
+                        EngineAPI.RemoveGameEntity(this);
+                        EntityId = ID.INVALID_ID;
                     }
 
                     OnPropertyChanged(nameof(IsActive));
@@ -148,45 +149,47 @@ namespace Editor.Components
         private readonly ObservableCollection<IMultiSelectComponent> _components = new();
         public ReadOnlyObservableCollection<IMultiSelectComponent> Components { get; }
 
+        public T GetMultiSelectComponent<T>() where T : IMultiSelectComponent
+        {
+            return (T)Components.FirstOrDefault(x=> x.GetType() == typeof(T));
+        }
+
         public List<GameEntity> SelectedEntities { get; }
 
-        public static float? GetMixedValue(List<GameEntity> entities, Func<GameEntity, float> getProperty)
+        private void MakeComponentList()
         {
-            float value = getProperty(entities.First());
-            foreach (GameEntity entity in entities.Skip(1))
+            _components.Clear();
+            GameEntity firstEntity = SelectedEntities.FirstOrDefault();
+            if (firstEntity == null) return;
+
+            foreach (Component compoennt in firstEntity.Components)
             {
-                if (!value.IsTheSameAs(getProperty(entity)))
+                Type type = compoennt.GetType();
+                if (!SelectedEntities.Skip(1).Any(entity => entity.GetComponent(type) == null))
                 {
-                    return null;
+                    Debug.Assert(Components.FirstOrDefault(x => x.GetType() == type) == null);
+                    _components.Add(compoennt.GetMultiSelectComponent(this));
                 }
             }
-            return value;
+
         }
 
-        public static bool? GetMixedValue(List<GameEntity> entities, Func<GameEntity, bool> getProperty)
+        public static float? GetMixedValue<T>(List<T> objects, Func<T, float> getProperty)
         {
-            bool value = getProperty(entities.First());
-            foreach (GameEntity entity in entities.Skip(1))
-            {
-                if (value != getProperty(entity))
-                {
-                    return null;
-                }
-            }
-            return value;
+            float value = getProperty(objects.First());
+            return objects.Skip(1).Any(x => !getProperty(x).IsTheSameAs(value)) ? null : value;
         }
 
-        public static string GetMixedValue(List<GameEntity> entities, Func<GameEntity, string> getProperty)
+        public static bool? GetMixedValue<T>(List<T> objects, Func<T, bool> getProperty)
         {
-            string value = getProperty(entities.First());
-            foreach (GameEntity entity in entities.Skip(1))
-            {
-                if (value != getProperty(entity))
-                {
-                    return null;
-                }
-            }
-            return value;
+            bool value = getProperty(objects.First());
+            return objects.Skip(1).Any(x => value != getProperty(x)) ? null : value;
+        }
+
+        public static string GetMixedValue<T>(List<T> objects, Func<T, string> getProperty)
+        {
+            string value = getProperty(objects.First());
+            return objects.Skip(1).Any(x => value != getProperty(x)) ? null : value;
         }
 
         protected virtual bool UpdateGameEntities(string propertyName)
@@ -211,6 +214,7 @@ namespace Editor.Components
         {
             _enableUpdates = false;
             UpdateMultiSelectGameEntity();
+            MakeComponentList();
             _enableUpdates = true;
         }
 

@@ -1,5 +1,4 @@
-﻿using Editor.GameDev;
-using Editor.GameProject.ViewModel;
+﻿using Editor.GameProject.ViewModel;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
@@ -21,11 +20,8 @@ namespace Editor.Editors
         {
             Loaded -= OnWorldEditorViewLoaded;
             Focus();
-        }
+			/// izbrisano - multi selection
 
-        private void OnNewScript_Button_Click(object sender, RoutedEventArgs e)
-        {
-            new NewScriptDialog().ShowDialog();
         }
     }
 }
