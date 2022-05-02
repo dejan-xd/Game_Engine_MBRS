@@ -1,4 +1,5 @@
 ﻿using Editor.Common;
+using Editor.Components;
 using Editor.GameDev;
 using Editor.Utilities;
 using Editor.WrappersDLL;
@@ -51,6 +52,20 @@ namespace Editor.GameProject.ViewModel
         }
         public BuildConfiguration StandAloneBuildConfig => BuildConfig == 0 ? BuildConfiguration.Debug : BuildConfiguration.Release;
         public BuildConfiguration DllBuildConfig => BuildConfig == 0 ? BuildConfiguration.DebugEditor : BuildConfiguration.ReleaseEditor;
+
+        private string[] _availableScripts;
+        public string[] AvailableScripts
+        {
+            get => _availableScripts;
+            set
+            {
+                if (_availableScripts != value)
+                {
+                    _availableScripts = value;
+                    OnPropertyChanged(nameof(AvailableScripts));
+                }
+            }
+        }
 
         [DataMember(Name = "Scenes")]
         private readonly ObservableCollection<Scene> _scenes = new();
@@ -146,6 +161,7 @@ namespace Editor.GameProject.ViewModel
         public void Unload()
         {
             // NOTE: dont make it static
+            UnloadGameCodeDll();
             VisualStudio.CloseVisualStudio();
             UndoRedo.Reset();
         }
@@ -179,8 +195,11 @@ namespace Editor.GameProject.ViewModel
         {
             string configName = GetConfigurationName(DllBuildConfig);
             string dll = $@"{Path}x64\{configName}\{Name}.dll";
+            AvailableScripts = null;
             if (File.Exists(dll) && EngineAPI.LoadGameCodeDll(dll) != 0)
             {
+                AvailableScripts = EngineAPI.GetScriptNames();
+                ActiveScene.GameEntities.Where(x => x.GetComponent<Script>() != null).ToList().ForEach(x => x.IsActive = true);
                 Logger.Log(MessageType.Info, "Game code DLL loaded successfully");
             }
             else
@@ -191,9 +210,11 @@ namespace Editor.GameProject.ViewModel
 
         private void UnloadGameCodeDll()
         {
+            ActiveScene.GameEntities.Where(x => x.GetComponent<Script>() != null).ToList().ForEach(x => x.IsActive = false);
             if (EngineAPI.UnloadGameCodeDll() != 0)
             {
                 Logger.Log(MessageType.Info, "Game code DLL unloaded");
+                AvailableScripts = null;
             }
         }
 
@@ -206,6 +227,7 @@ namespace Editor.GameProject.ViewModel
                 OnPropertyChanged(nameof(Scenes));
             }
             ActiveScene = Scenes.FirstOrDefault(x => x.IsActive);
+            Debug.Assert(ActiveScene != null);
 
             await BuildGameCodeDll(false);
 

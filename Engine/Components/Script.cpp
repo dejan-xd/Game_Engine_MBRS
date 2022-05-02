@@ -1,4 +1,5 @@
 #include "Script.h"
+
 #include "Entity.h"
 
 namespace primal::script {
@@ -17,17 +18,27 @@ namespace primal::script {
 			return reg;
 		}
 
+#ifdef USE_WITH_EDITOR
+		utl::vector<std::string>& script_names() {
+			// NOTE: I put this static variable in a function because of the initialization order of static data.
+			//		 This way, I can be certain that the data is initialized before accessing it.
+			static utl::vector<std::string> names;
+			return names;
+		}
+#endif  // USE_WITH_EDITOR
+
 		bool exists(script_id id) {
 			assert(id::is_valid(id));
 			const id::id_type index{ id::index(id) };
-			assert(index < generations.size() && id_mapping[index] < entity_scripts.size());
+			assert(index < generations.size() &&
+				id_mapping[index] < entity_scripts.size());
 			assert(generations[index] == id::generation(id));
 
 			return (generations[index] == id::generation(id)) &&
 				entity_scripts[id_mapping[index]] &&
 				entity_scripts[id_mapping[index]]->is_valid();
 		}
-	}	// anonymous namespace
+	}  // anonymous namespace
 
 	namespace detail {
 		u8 register_script(size_t tag, script_creator func) {
@@ -35,7 +46,20 @@ namespace primal::script {
 			assert(result);
 			return result;
 		}
-	}	// detail namespace
+
+		script_creator get_script_creator(size_t tag) {
+			auto script = primal::script::registry().find(tag);
+			assert(script != primal::script::registry().end() && script->first == tag);
+			return script->second;
+		}
+
+#ifdef USE_WITH_EDITOR
+		u8 add_script_name(const char* name) {
+			script_names().emplace_back(name);
+			return true;
+		}
+#endif  // USE_WITH_EDITOR
+	}  // namespace detail
 
 	component create(init_info info, game_entity::entity entity) {
 		assert(entity.is_valid());
@@ -74,4 +98,18 @@ namespace primal::script {
 		id_mapping[id::index(last_id)] = index;
 		id_mapping[id::index(id)] = id::invalid_id;
 	}
-}	// script namespace
+}  // namespace primal::script
+
+#ifdef USE_WITH_EDITOR
+#include <atlsafe.h>
+
+extern "C" __declspec(dllexport) LPSAFEARRAY get_script_names() {
+	const u32 size{ (u32)primal::script::script_names().size() };
+	if (!size) return nullptr;
+	CComSafeArray<BSTR> names(size);
+	for (u32 i{ 0 }; i < size; ++i) {
+		names.SetAt(i, A2BSTR_EX(primal::script::script_names()[i].c_str()), false);
+	}
+	return names.Detach();
+}
+#endif  // USE_WITH_EDITOR
