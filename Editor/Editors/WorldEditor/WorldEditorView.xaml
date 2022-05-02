@@ -19,6 +19,7 @@
         <KeyBinding Command="{Binding UndoCommand}" Key="Z" Modifiers="Ctrl"/>
         <KeyBinding Command="{Binding RedoCommand}" Key="Y" Modifiers="Ctrl"/>
         <KeyBinding Command="{Binding SaveCommand}" Key="S" Modifiers="Ctrl"/>
+        <KeyBinding Command="{Binding BuildCommand}" Key="B" Modifiers="Ctrl" CommandParameter="{StaticResource False}"/>
     </UserControl.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -40,7 +41,7 @@
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
@@ -73,7 +74,7 @@
                 </Grid>
             </Grid>
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Left" VerticalAlignment="Stretch" Background="Transparent"/>
-            <Grid Grid.Column="1" Margin="5,0,0,0">
+            <Grid Grid.Column="1" Margin="5,0,0,0" MinWidth="250">
                 <Grid.RowDefinitions>
                     <RowDefinition/>
                     <RowDefinition/>

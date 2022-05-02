@@ -44,12 +44,12 @@ namespace Editor.Editors
                 "Selection changed"
                 ));
 
-            MultiSelectEntity multiSelectEntity = null;
+            MSEntity msEntity = null;
             if (newSelection.Any())
             {
-                multiSelectEntity = new MultiSelectGameEntity(newSelection);
+                msEntity = new MSGameEntity(newSelection);
             }
-            GameEntityView.Instance.DataContext = multiSelectEntity;
+            GameEntityView.Instance.DataContext = msEntity;
         }
     }
 }

@@ -6,12 +6,12 @@ using System.Runtime.Serialization;
 
 namespace Editor.Components
 {
-    interface IMultiSelectComponent { }
+    interface IMSComponent { }
 
     [DataContract]
     abstract class Component : ViewModelBase
     {
-        public abstract IMultiSelectComponent GetMultiSelectComponent(MultiSelectEntity multiSelectEntity);
+        public abstract IMSComponent GetMultiSelectionComponent(MSEntity msEntity);
 
         [DataMember]
         public GameEntity Owner { get; private set; }
@@ -23,7 +23,7 @@ namespace Editor.Components
         }
     }
 
-    abstract class MultiSelectComponent<T> : ViewModelBase, IMultiSelectComponent where T : Component
+    abstract class MSComponent<T> : ViewModelBase, IMSComponent where T : Component
     {
         private bool _enableUpdates = true;
         public List<T> SelectedComponents { get; }
@@ -38,10 +38,10 @@ namespace Editor.Components
             _enableUpdates = true;
         }
 
-        public MultiSelectComponent(MultiSelectEntity multiSelectEntity)
+        public MSComponent(MSEntity msEntity)
         {
-            Debug.Assert(multiSelectEntity?.SelectedEntities?.Any() == true);
-            SelectedComponents = multiSelectEntity.SelectedEntities.Select(entity => entity.GetComponent<T>()).ToList();
+            Debug.Assert(msEntity?.SelectedEntities?.Any() == true);
+            SelectedComponents = msEntity.SelectedEntities.Select(entity => entity.GetComponent<T>()).ToList();
             PropertyChanged += (s, e) => { if (_enableUpdates) { UpdateComponents(e.PropertyName); } };
         }
     }

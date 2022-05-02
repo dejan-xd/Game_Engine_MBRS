@@ -7,7 +7,7 @@
              xmlns:components="clr-namespace:Editor.Components"
              xmlns:controls="clr-namespace:Editor.Utilities.Controls"
              mc:Ignorable="d" 
-             d:DataContext="{d:DesignInstance Type=components:MultiSelectTransform, IsDesignTimeCreatable=True}"
+             d:DataContext="{d:DesignInstance Type=components:MSTransform, IsDesignTimeCreatable=True}"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource LightTextBlockStyle}"/>

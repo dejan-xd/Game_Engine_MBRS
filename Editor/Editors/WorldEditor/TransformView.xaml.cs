@@ -27,23 +27,23 @@ namespace Editor.Editors
         private void OnTransformViewLoaded(object sender, RoutedEventArgs e)
         {
             Loaded -= OnTransformViewLoaded;
-            (DataContext as MultiSelectTransform).PropertyChanged += (s, e) => _propertyChanged = true;
+            (DataContext as MSTransform).PropertyChanged += (s, e) => _propertyChanged = true;
         }
 
         private Action GetAction(Func<Transform, (Transform transform, Vector3)> selector, Action<(Transform transform, Vector3)> forEachAction)
         {
-            if (DataContext is not MultiSelectTransform multiSelectTransform)
+            if (DataContext is not MSTransform msTransform)
             {
                 _undoAction = null;
                 _propertyChanged = false;
                 return null;
             }
 
-            var selection = multiSelectTransform.SelectedComponents.Select(x => selector(x)).ToList();
+            var selection = msTransform.SelectedComponents.Select(x => selector(x)).ToList();
             return new Action(() =>
             {
                 selection.ForEach(x => forEachAction(x));
-                (GameEntityView.Instance.DataContext as MultiSelectEntity)?.GetMultiSelectComponent<MultiSelectTransform>().Refresh();
+                (GameEntityView.Instance.DataContext as MSEntity)?.GetMultiSelectComponent<MSTransform>().Refresh();
             });
         }
 

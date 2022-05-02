@@ -13,6 +13,7 @@ namespace Editor.Components
 {
     [DataContract(Namespace = "http://schemas.datacontract.org/2004/07/Editor.Components")]
     [KnownType(typeof(Transform))]
+    [KnownType(typeof(Script))]
     internal class GameEntity : ViewModelBase
     {
         private int _entityId = ID.INVALID_ID;
@@ -40,12 +41,12 @@ namespace Editor.Components
                     _isActive = value;
                     if (_isActive)
                     {
-                        EntityId = EngineAPI.CreateGameEntity(this);
+                        EntityId = EngineAPI.EntityAPI.CreateGameEntity(this);
                         Debug.Assert(ID.IsValid(_entityId));
                     }
                     else if (ID.IsValid(EntityId))
                     {
-                        EngineAPI.RemoveGameEntity(this);
+                        EngineAPI.EntityAPI.RemoveGameEntity(this);
                         EntityId = ID.INVALID_ID;
                     }
 
@@ -94,6 +95,33 @@ namespace Editor.Components
         public Component GetComponent(Type type) => Components.FirstOrDefault(x => x.GetType() == type);
         public T GetComponent<T>() where T : Component => GetComponent(typeof(T)) as T; // for casting
 
+        public bool AddComponent(Component component)
+        {
+            Debug.Assert(component != null);
+            if (!Components.Any(x => x.GetType() == component.GetType()))
+            {
+                IsActive = false;
+                _components.Add(component);
+                IsActive = true;
+                return true;
+            }
+            Logger.Log(MessageType.Warning, $"Entity {Name} already has a {component.GetType().Name} component");
+            return false;
+        }
+
+        public void RemoveComponent(Component component)
+        {
+            Debug.Assert(component != null);
+            if (component is Transform) return; // Transform component can't be removed
+
+            if (_components.Contains(component))
+            {
+                IsActive = false;
+                _components.Remove(component);
+                IsActive = true;
+            }
+        }
+
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
         {
@@ -113,7 +141,7 @@ namespace Editor.Components
         }
     }
 
-    abstract class MultiSelectEntity : ViewModelBase
+    abstract class MSEntity : ViewModelBase
     {
         // enables updates to selected entities
         private bool _enableUpdates = true;
@@ -146,10 +174,10 @@ namespace Editor.Components
             }
         }
 
-        private readonly ObservableCollection<IMultiSelectComponent> _components = new();
-        public ReadOnlyObservableCollection<IMultiSelectComponent> Components { get; }
+        private readonly ObservableCollection<IMSComponent> _components = new();
+        public ReadOnlyObservableCollection<IMSComponent> Components { get; }
 
-        public T GetMultiSelectComponent<T>() where T : IMultiSelectComponent
+        public T GetMultiSelectComponent<T>() where T : IMSComponent
         {
             return (T)Components.FirstOrDefault(x=> x.GetType() == typeof(T));
         }
@@ -168,7 +196,7 @@ namespace Editor.Components
                 if (!SelectedEntities.Skip(1).Any(entity => entity.GetComponent(type) == null))
                 {
                     Debug.Assert(Components.FirstOrDefault(x => x.GetType() == type) == null);
-                    _components.Add(compoennt.GetMultiSelectComponent(this));
+                    _components.Add(compoennt.GetMultiSelectionComponent(this));
                 }
             }
 
@@ -218,18 +246,18 @@ namespace Editor.Components
             _enableUpdates = true;
         }
 
-        public MultiSelectEntity(List<GameEntity> entities)
+        public MSEntity(List<GameEntity> entities)
         {
             Debug.Assert(entities?.Any() == true);
-            Components = new ReadOnlyObservableCollection<IMultiSelectComponent>(_components);
+            Components = new ReadOnlyObservableCollection<IMSComponent>(_components);
             SelectedEntities = entities;
             PropertyChanged += (s, e) => { if (_enableUpdates) UpdateGameEntities(e.PropertyName); };
         }
     }
 
-    class MultiSelectGameEntity : MultiSelectEntity
+    class MSGameEntity : MSEntity
     {
-        public MultiSelectGameEntity(List<GameEntity> entities) : base(entities)
+        public MSGameEntity(List<GameEntity> entities) : base(entities)
         {
             Refresh();
         }
