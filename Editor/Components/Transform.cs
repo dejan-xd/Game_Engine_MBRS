@@ -53,12 +53,12 @@ namespace Editor.Components
             }
         }
 
-        public override IMultiSelectComponent GetMultiSelectComponent(MultiSelectEntity multiSelectEntity) => new MultiSelectTransform(multiSelectEntity);
+        public override IMSComponent GetMultiSelectionComponent(MSEntity msEntity) => new MSTransform(msEntity);
 
         public Transform(GameEntity owner) : base(owner) { }
     }
 
-    sealed class MultiSelectTransform : MultiSelectComponent<Transform>
+    sealed class MSTransform : MSComponent<Transform>
     {
         private float? _posX;
         public float? PosX
@@ -213,22 +213,22 @@ namespace Editor.Components
 
         protected override bool UpdateMultiSelectComponent()
         {
-            PosX = MultiSelectEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Position.X));
-            PosY = MultiSelectEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Position.Y));
-            PosZ = MultiSelectEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Position.Z));
+            PosX = MSEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Position.X));
+            PosY = MSEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Position.Y));
+            PosZ = MSEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Position.Z));
 
-            RotX = MultiSelectEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Rotation.X));
-            RotY = MultiSelectEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Rotation.Y));
-            RotZ = MultiSelectEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Rotation.Z));
+            RotX = MSEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Rotation.X));
+            RotY = MSEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Rotation.Y));
+            RotZ = MSEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Rotation.Z));
 
-            ScaleX = MultiSelectEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Scale.X));
-            ScaleY = MultiSelectEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Scale.Y));
-            ScaleZ = MultiSelectEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Scale.Z));
+            ScaleX = MSEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Scale.X));
+            ScaleY = MSEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Scale.Y));
+            ScaleZ = MSEntity.GetMixedValue(SelectedComponents, new Func<Transform, float>(c => c.Scale.Z));
 
             return true;
         }
 
-        public MultiSelectTransform(MultiSelectEntity multiSelectEntity) : base(multiSelectEntity)
+        public MSTransform(MSEntity msEntity) : base(msEntity)
         {
             Refresh();
         }
