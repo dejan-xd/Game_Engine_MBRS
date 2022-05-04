@@ -19,6 +19,9 @@
         <KeyBinding Command="{Binding UndoCommand}" Key="Z" Modifiers="Ctrl"/>
         <KeyBinding Command="{Binding RedoCommand}" Key="Y" Modifiers="Ctrl"/>
         <KeyBinding Command="{Binding SaveCommand}" Key="S" Modifiers="Ctrl"/>
+        <KeyBinding Command="{Binding DebugStartCommand}" Key="F5"/>
+        <KeyBinding Command="{Binding DebugStartWithoutDebuggingCommand}" Key="F5" Modifiers="Ctrl"/>
+        <KeyBinding Command="{Binding DebugStopCommand}" Key="F5" Modifiers="Shift"/>
         <KeyBinding Command="{Binding BuildCommand}" Key="B" Modifiers="Ctrl" CommandParameter="{StaticResource False}"/>
     </UserControl.InputBindings>
     <Grid>
