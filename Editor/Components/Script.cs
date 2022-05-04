@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.Serialization;
+using System.Text;
 
 namespace Editor.Components
 {
@@ -22,6 +24,13 @@ namespace Editor.Components
         }
 
         public override IMSComponent GetMultiSelectionComponent(MSEntity msEntity) => new MSScript(msEntity);
+
+        public override void WriteToBinary(BinaryWriter bw)
+        {
+            byte[] nameBytes = Encoding.UTF8.GetBytes(Name);
+            bw.Write(nameBytes.Length);
+            bw.Write(nameBytes);
+        }
 
         public Script(GameEntity owner) : base(owner) { }
     }
