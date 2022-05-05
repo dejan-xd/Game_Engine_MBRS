@@ -7,7 +7,7 @@ namespace primal::platform {
 	namespace {
 		struct window_info {
 			HWND hwnd{ nullptr };
-			RECT client_area{ 0, 0, 1920, 1080 };
+			RECT client_area{ 0, 0, 1600, 900 };
 			RECT fullscreen_area{};
 			POINT top_left{ 0, 0 };
 			DWORD style{ WS_VISIBLE };
@@ -62,6 +62,26 @@ namespace primal::platform {
 			case WM_DESTROY:
 				get_from_handle(hwnd).is_closed = true;
 				break;
+			case WM_EXITSIZEMOVE:
+				info = &get_from_handle(hwnd);
+				break;
+			case WM_SIZE:
+				if (wparam == SIZE_MAXIMIZED) {
+					info = &get_from_handle(hwnd);
+				}
+				break;
+			case WM_SYSCOMMAND:
+				if (wparam == SC_RESTORE) {
+					info = &get_from_handle(hwnd);
+				}
+				break;
+			default:
+				break;
+			}
+
+			if (info) {
+				assert(info->hwnd);
+				GetClientRect(info->hwnd, info->is_fullscreen ? &info->fullscreen_area : &info->client_area);
 			}
 
 			LONG_PTR long_ptr{ GetWindowLongPtr(hwnd, 0) };
@@ -155,7 +175,7 @@ namespace primal::platform {
 		wc.hInstance = 0;
 		wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wc.hbrBackground = CreateSolidBrush(RGB(168, 204, 215)); // 152, 158, 161; default - 26, 48, 76
+		wc.hbrBackground = CreateSolidBrush(RGB(26, 48, 76));
 		wc.lpszMenuName = NULL;
 		wc.lpszClassName = L"GameEngine Window";
 		/* Win 4.0 */
@@ -196,6 +216,10 @@ namespace primal::platform {
 		);
 
 		if (info.hwnd) {
+			// NOTE: reset last error state since the assertion will always fail 
+			//		 since we are trying to register the same class multiple times
+			SetLastError(0);
+
 			const window_id id{ add_to_windows(info) };
 			SetWindowLongPtr(info.hwnd, GWLP_USERDATA, (LONG_PTR)id);
 
