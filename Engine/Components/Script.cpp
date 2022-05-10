@@ -8,7 +8,7 @@ namespace primal::script {
 		utl::vector<id::id_type> id_mapping;
 
 		utl::vector<id::generation_type> generations;
-		utl::deque<script_id> free_ids;
+		utl::vector<script_id> free_ids;
 
 		using script_registry = std::unordered_map<size_t, detail::script_creator>;
 		script_registry& registry() {
@@ -69,7 +69,7 @@ namespace primal::script {
 		if (free_ids.size() > id::min_deleted_elements) {
 			id = free_ids.front();
 			assert(!exists(id));
-			free_ids.pop_front();
+			free_ids.pop_back();
 			id = script_id{ id::new_generation(id) };
 			++generations[id::index(id)];
 		}
@@ -97,6 +97,12 @@ namespace primal::script {
 		utl::erase_unordered(entity_scripts, index);
 		id_mapping[id::index(last_id)] = index;
 		id_mapping[id::index(id)] = id::invalid_id;
+	}
+
+	void update(float dt) {
+		for (auto& ptr : entity_scripts) {
+			ptr->update(dt);
+		}
 	}
 }  // namespace primal::script
 
