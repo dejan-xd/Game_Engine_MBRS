@@ -26,6 +26,7 @@
     <ClInclude Include="Components\Entity.h" />
     <ClInclude Include="Components\Script.h" />
     <ClInclude Include="Components\Transform.h" />
+    <ClInclude Include="Content\ContentLoader.h" />
     <ClInclude Include="EngineAPI\GameEntity.h" />
     <ClInclude Include="EngineAPI\ScriptComponent.h" />
     <ClInclude Include="EngineAPI\TransformComponent.h" />
@@ -36,6 +37,7 @@
     <ClCompile Include="Components\Entity.cpp" />
     <ClCompile Include="Components\Script.cpp" />
     <ClCompile Include="Components\Transform.cpp" />
+    <ClCompile Include="Content\ContentLoader.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
     <ClCompile Include="Core\Main.cpp" />
   </ItemGroup>
@@ -50,26 +52,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugEditor|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseEditor|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
