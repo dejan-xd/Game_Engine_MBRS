@@ -19,8 +19,8 @@ namespace primal::platform {
         const wchar_t* caption{ nullptr };
         s32 left{ 0 };
         s32 top{ 0 };
-        s32 width{ 1920 };
-        s32 height{ 1080 };
+        s32 width{ 1600 };
+        s32 height{ 900 };
     };
 }
 

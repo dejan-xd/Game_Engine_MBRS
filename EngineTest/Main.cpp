@@ -17,7 +17,7 @@
 #include<Windows.h>
 
 // WINDOW TESTING
-int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 #if _DEBUG
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -31,7 +31,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         while (is_running) {
             while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
                 // NOTE: Inner while loop reads, removes and dispatches messages from the message queue,
-                //         until there are no messages left to precoess.
+                //       until there are no messages left to precoess.
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
                 is_running &= (msg.message != WM_QUIT);
