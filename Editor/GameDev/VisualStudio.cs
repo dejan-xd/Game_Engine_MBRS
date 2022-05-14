@@ -13,6 +13,7 @@ namespace Editor.GameDev
     {
         public static bool BuildSucceeded { get; private set; } = true;
         public static bool BuildDone { get; private set; } = true;
+        public static bool BuildInProgress { get; private set; }
 
         private static EnvDTE80.DTE2 _vsInstance = null;
         private static readonly string _progID = "VisualStudio.DTE.16.0";   //  supporting only Visual Studio 2019
@@ -149,16 +150,26 @@ namespace Editor.GameDev
 
         private static void OnBuildSolutionBegin(string project, string projectConfig, string platform, string solutionConfig)
         {
-            Logger.Log(MessageType.Info, $"Building {project}, {projectConfig}, {platform}, {solutionConfig}");
+            if (!BuildInProgress)
+            {
+                Logger.Log(MessageType.Info, $"Building {project}, {projectConfig}, {platform}, {solutionConfig}");
+                BuildInProgress = true;
+            }
         }
 
         private static void OnBuildSolutionDone(string project, string projectConfig, string platform, string solutionConfig, bool success)
         {
-            if (BuildDone) return;
+            if (BuildDone)
+            {
+                BuildInProgress = false;
+                return;
+            }
+
             if (success) Logger.Log(MessageType.Info, $"Building {projectConfig} configuration succeeded");
             else Logger.Log(MessageType.Error, $"Building {projectConfig} configuration failed");
 
             BuildDone = true;
+            BuildInProgress = false;
             BuildSucceeded = success;
         }
 
