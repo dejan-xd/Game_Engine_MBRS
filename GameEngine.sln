@@ -13,6 +13,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EngineTest", "EngineTest\En
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EngineDLL", "EngineDLL\EngineDLL.vcxproj", "{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DFAE320D-D968-40D7-9D78-F526E6AA5C0E} = {DFAE320D-D968-40D7-9D78-F526E6AA5C0E}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ContentTools", "ContentTools\ContentTools.vcxproj", "{616A8012-EDB9-4C7C-BF76-EBBC5429CFF9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,12 +27,10 @@ Global
 		ReleaseEditor|x64 = ReleaseEditor|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{0D637BD8-A695-4247-AD77-DBFA1AA030AF}.Debug|x64.ActiveCfg = Debug|x64
-		{0D637BD8-A695-4247-AD77-DBFA1AA030AF}.Debug|x64.Build.0 = Debug|x64
+		{0D637BD8-A695-4247-AD77-DBFA1AA030AF}.Debug|x64.ActiveCfg = DebugEditor|x64
 		{0D637BD8-A695-4247-AD77-DBFA1AA030AF}.DebugEditor|x64.ActiveCfg = DebugEditor|x64
 		{0D637BD8-A695-4247-AD77-DBFA1AA030AF}.DebugEditor|x64.Build.0 = DebugEditor|x64
-		{0D637BD8-A695-4247-AD77-DBFA1AA030AF}.Release|x64.ActiveCfg = Release|x64
-		{0D637BD8-A695-4247-AD77-DBFA1AA030AF}.Release|x64.Build.0 = Release|x64
+		{0D637BD8-A695-4247-AD77-DBFA1AA030AF}.Release|x64.ActiveCfg = ReleaseEditor|x64
 		{0D637BD8-A695-4247-AD77-DBFA1AA030AF}.ReleaseEditor|x64.ActiveCfg = ReleaseEditor|x64
 		{0D637BD8-A695-4247-AD77-DBFA1AA030AF}.ReleaseEditor|x64.Build.0 = ReleaseEditor|x64
 		{DFAE320D-D968-40D7-9D78-F526E6AA5C0E}.Debug|x64.ActiveCfg = Debug|x64
@@ -41,19 +44,21 @@ Global
 		{D6B43CE7-31D1-46BB-97C3-74DAF020C6A1}.Debug|x64.ActiveCfg = Debug|x64
 		{D6B43CE7-31D1-46BB-97C3-74DAF020C6A1}.Debug|x64.Build.0 = Debug|x64
 		{D6B43CE7-31D1-46BB-97C3-74DAF020C6A1}.DebugEditor|x64.ActiveCfg = DebugEditor|x64
-		{D6B43CE7-31D1-46BB-97C3-74DAF020C6A1}.DebugEditor|x64.Build.0 = DebugEditor|x64
 		{D6B43CE7-31D1-46BB-97C3-74DAF020C6A1}.Release|x64.ActiveCfg = Release|x64
 		{D6B43CE7-31D1-46BB-97C3-74DAF020C6A1}.Release|x64.Build.0 = Release|x64
 		{D6B43CE7-31D1-46BB-97C3-74DAF020C6A1}.ReleaseEditor|x64.ActiveCfg = ReleaseEditor|x64
-		{D6B43CE7-31D1-46BB-97C3-74DAF020C6A1}.ReleaseEditor|x64.Build.0 = ReleaseEditor|x64
-		{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}.Debug|x64.ActiveCfg = Debug|x64
-		{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}.Debug|x64.Build.0 = Debug|x64
+		{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}.Debug|x64.ActiveCfg = DebugEditor|x64
 		{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}.DebugEditor|x64.ActiveCfg = DebugEditor|x64
 		{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}.DebugEditor|x64.Build.0 = DebugEditor|x64
-		{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}.Release|x64.ActiveCfg = Release|x64
-		{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}.Release|x64.Build.0 = Release|x64
+		{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}.Release|x64.ActiveCfg = ReleaseEditor|x64
 		{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}.ReleaseEditor|x64.ActiveCfg = ReleaseEditor|x64
 		{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}.ReleaseEditor|x64.Build.0 = ReleaseEditor|x64
+		{616A8012-EDB9-4C7C-BF76-EBBC5429CFF9}.Debug|x64.ActiveCfg = DebugEditor|x64
+		{616A8012-EDB9-4C7C-BF76-EBBC5429CFF9}.DebugEditor|x64.ActiveCfg = DebugEditor|x64
+		{616A8012-EDB9-4C7C-BF76-EBBC5429CFF9}.DebugEditor|x64.Build.0 = DebugEditor|x64
+		{616A8012-EDB9-4C7C-BF76-EBBC5429CFF9}.Release|x64.ActiveCfg = ReleaseEditor|x64
+		{616A8012-EDB9-4C7C-BF76-EBBC5429CFF9}.ReleaseEditor|x64.ActiveCfg = ReleaseEditor|x64
+		{616A8012-EDB9-4C7C-BF76-EBBC5429CFF9}.ReleaseEditor|x64.Build.0 = ReleaseEditor|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

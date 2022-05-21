@@ -28,8 +28,10 @@ EDITOR_INTERFACE u32 LoadGameCodeDll(const char* dll_path) {
 	game_code_dll = LoadLibraryA(dll_path);
 	assert(game_code_dll);
 
-	get_script_creator = (_get_script_creator)GetProcAddress(game_code_dll, "get_script_creator");
-	get_script_names = (_get_script_names)GetProcAddress(game_code_dll, "get_script_names");
+	if (game_code_dll) {
+		get_script_creator = (_get_script_creator)GetProcAddress(game_code_dll, "get_script_creator");
+		get_script_names = (_get_script_names)GetProcAddress(game_code_dll, "get_script_names");
+	}
 
 	return (game_code_dll && get_script_creator && get_script_names) ? TRUE : FALSE;
 }
