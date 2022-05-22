@@ -20,6 +20,11 @@ namespace Editor.Utilities
 
         public int SurfaceId { get; private set; } = ID.INVALID_ID;
 
+        public void Resize()
+        {
+            _resizeTimer.Trigger();
+        }
+
         private void Resize(object sender, DelayEventTimerArgs e)
         {
             e.RepeatEvent = GetAsyncKeyState(VK_LBUTTON) < 0;
