@@ -13,9 +13,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EngineTest", "EngineTest\En
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EngineDLL", "EngineDLL\EngineDLL.vcxproj", "{5C3AAE8F-DBA2-4415-9CCC-B61396F5E2A1}"
-	ProjectSection(ProjectDependencies) = postProject
-		{DFAE320D-D968-40D7-9D78-F526E6AA5C0E} = {DFAE320D-D968-40D7-9D78-F526E6AA5C0E}
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
