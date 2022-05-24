@@ -4,7 +4,7 @@
 #include <Windows.h>
 #include <crtdbg.h>
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
+BOOL APIENTRY DllMain([[maybe_unused]] HMODULE hModule, DWORD  ul_reason_for_call, [[maybe_unused]] LPVOID lpReserved)
 {
 	switch (ul_reason_for_call)
 	{

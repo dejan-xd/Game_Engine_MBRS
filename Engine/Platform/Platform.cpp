@@ -165,7 +165,7 @@ namespace primal::platform {
 		}
 	} // anonymous namespace
 
-	window create_window(const window_init_info* const init_info /* = nullptr */) {
+	window create_window(const window_init_info* init_info /* = nullptr */) {
 		window_proc callback{ init_info ? init_info->callback : nullptr };
 		window_handle parent{ init_info ? init_info->parent : nullptr };
 
