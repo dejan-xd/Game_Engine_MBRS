@@ -68,5 +68,4 @@ namespace primal::tools {
 	void process_scene(scene& scene, const geometry_import_settings& settings);
 	void pack_data(const scene& scene, scene_data& data);
 
-	// test push
 }
