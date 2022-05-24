@@ -5,11 +5,12 @@
 #include "..\Platform\PlatformTypes.h"
 #include "..\Platform\Platform.h"
 
-#ifndef WINR32_MEAN_AND_LEAN
-#define WINR32_MEAN_AND_LEAN
-#endif // !WINR32_MEAN_AND_LEAN
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif // !WIN32_LEAN_AND_MEAN
 
 #include <Windows.h>
+#include <atlsafe.h>
 
 using namespace primal;
 
@@ -28,8 +29,10 @@ EDITOR_INTERFACE u32 LoadGameCodeDll(const char* dll_path) {
 	game_code_dll = LoadLibraryA(dll_path);
 	assert(game_code_dll);
 
-	get_script_creator = (_get_script_creator)GetProcAddress(game_code_dll, "get_script_creator");
-	get_script_names = (_get_script_names)GetProcAddress(game_code_dll, "get_script_names");
+	if (game_code_dll) {
+		get_script_creator = (_get_script_creator)GetProcAddress(game_code_dll, "get_script_creator");
+		get_script_names = (_get_script_names)GetProcAddress(game_code_dll, "get_script_names");
+	}
 
 	return (game_code_dll && get_script_creator && get_script_names) ? TRUE : FALSE;
 }
