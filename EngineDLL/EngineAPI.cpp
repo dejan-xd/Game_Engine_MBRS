@@ -5,11 +5,12 @@
 #include "..\Platform\PlatformTypes.h"
 #include "..\Platform\Platform.h"
 
-#ifndef WINR32_MEAN_AND_LEAN
-#define WINR32_MEAN_AND_LEAN
-#endif // !WINR32_MEAN_AND_LEAN
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif // !WIN32_LEAN_AND_MEAN
 
 #include <Windows.h>
+#include <atlsafe.h>
 
 using namespace primal;
 
