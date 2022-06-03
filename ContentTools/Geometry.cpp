@@ -283,6 +283,8 @@ namespace primal::tools {
 			for (auto& m : lod.meshes) {
 				pack_mesh_data(m, buffer, at);
 			}
+
+			assert(scene_size == at);
 		}
 	}
 }
