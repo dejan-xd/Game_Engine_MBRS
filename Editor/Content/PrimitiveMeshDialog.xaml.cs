@@ -1,4 +1,5 @@
 ﻿using Editor.ContentToolsAPIStructs;
+using Editor.Editors;
 using Editor.Utilities.Controls;
 using Editor.WrappersDLL;
 using System;
@@ -57,6 +58,7 @@ namespace Editor.Content
 
             Geometry geometry = new();
             ContentToolsAPI.CreatePrimitiveMesh(geometry, info);
+            (DataContext as GeometryEditor).SetAsset(geometry);
         }
 
         public PrimitiveMeshDialog()
