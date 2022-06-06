@@ -100,7 +100,7 @@ namespace Editor.Utilities.Controls
                     else if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) _multiplier = 0.1; // 10 times faster if SHIFT is pressed
                     else _multiplier = 0.01;
                     double newValue = _originalValue + (difference * _multiplier * Multiplier);
-                    Value = newValue.ToString("0.#####");
+                    Value = newValue.ToString("G5");
                     _valueChanged = true;
                 }
             }
