@@ -65,7 +65,7 @@ namespace Editor.WrappersDLL
             {
                 CreatePrimitiveMesh(sceneData, info);
                 Debug.Assert(sceneData.Data != IntPtr.Zero && sceneData.DataSize > 0);
-                var data = new byte[sceneData.DataSize];
+                byte[] data = new byte[sceneData.DataSize];
                 Marshal.Copy(sceneData.Data, data, 0, sceneData.DataSize);
                 geometry.FromRawData(data);
             }
