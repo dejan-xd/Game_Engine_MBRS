@@ -179,7 +179,7 @@ namespace Editor.Components
 
         public T GetMultiSelectComponent<T>() where T : IMSComponent
         {
-            return (T)Components.FirstOrDefault(x=> x.GetType() == typeof(T));
+            return (T)Components.FirstOrDefault(x => x.GetType() == typeof(T));
         }
 
         public List<GameEntity> SelectedEntities { get; }

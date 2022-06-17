@@ -8,7 +8,7 @@ namespace primal::tools {
 
 		void recalculate_normals(mesh& m) {
 			const u32 num_indices{ (u32)m.raw_indices.size() };
-			m.normals.reserve(num_indices); // resize the array of normals to the number of indices
+			m.normals.resize(num_indices); // resize the array of normals to the number of indices
 
 			for (u32 i{ 0 }; i < num_indices; ++i) {
 				const u32 i0{ m.raw_indices[i] };
@@ -94,7 +94,7 @@ namespace primal::tools {
 				idx_ref[old_indices[i]].emplace_back(i);
 			}
 
-			for (u32 i{ 0 }; i < num_indices; ++i) {
+			for (u32 i{ 0 }; i < num_vertices; ++i) {
 				auto& refs{ idx_ref[i] };
 				u32 num_refs{ (u32)refs.size() };
 
@@ -137,7 +137,7 @@ namespace primal::tools {
 		}
 
 		void process_vertices(mesh& m, const geometry_import_settings& settings) {
-			assert((m.raw_indices.size() & 3) == 0);
+			assert((m.raw_indices.size() % 3) == 0);
 			if (settings.calculate_normals || m.normals.empty()) {
 				recalculate_normals(m);
 			}
@@ -283,6 +283,8 @@ namespace primal::tools {
 			for (auto& m : lod.meshes) {
 				pack_mesh_data(m, buffer, at);
 			}
+
+			assert(scene_size == at);
 		}
 	}
 }
