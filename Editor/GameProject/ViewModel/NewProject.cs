@@ -189,7 +189,7 @@ namespace Editor.GameProject.ViewModel
                 {
                     ProjectTemplate template = Serializer.FromFile<ProjectTemplate>(file);
                     template.TemplatePath = Path.GetDirectoryName(file);
-                    template.IconPath = Path.GetFullPath(Path.Combine(template.TemplatePath, "Icon.ico"));
+                    template.IconPath = Path.GetFullPath(Path.Combine(template.TemplatePath, "Icon.png"));
                     template.Icon = File.ReadAllBytes(template.IconPath);
                     template.ScreenshotPath = Path.GetFullPath(Path.Combine(template.TemplatePath, "Screenshot.png"));
                     template.Screenshot = File.ReadAllBytes(template.ScreenshotPath);
