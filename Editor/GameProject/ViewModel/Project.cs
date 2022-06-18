@@ -284,7 +284,5 @@ namespace Editor.GameProject.ViewModel
 
             OnDeserialized(new StreamingContext());
         }
-
-        public Project() { }
     }
 }

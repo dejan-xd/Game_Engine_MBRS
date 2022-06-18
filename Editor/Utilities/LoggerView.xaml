@@ -92,15 +92,15 @@
             <Border.Effect>
                 <DropShadowEffect Opacity="0.3" BlurRadius="10" ShadowDepth="0"/>
             </Border.Effect>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="4,0" VerticalAlignment="Center">
-                <Button Content="Clear" Margin="1,0" x:Name="clearBtn" Click="ClearBtn_Click" Focusable="False"/>
-                <ToggleButton IsChecked="True" Content="Info" Margin="1,0" ToolTip="Toggle information messages"
-                              x:Name="toggleInfo" Background="{StaticResource Editor.GreenBrush}"/>
-                <ToggleButton IsChecked="True" Content="Warn" Margin="1,0" ToolTip="Toggle warning messages"
-                              x:Name="toggleWarn" Background="{StaticResource Editor.OrangeBrush}"/>
-                <ToggleButton IsChecked="True" Content="Error" Margin="1,0" ToolTip="Toggle error messages"
-                              x:Name="toggleError" Background="{StaticResource Editor.RedBrush}"/>
-            </StackPanel>
         </Border>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,2,0,0" VerticalAlignment="Top">
+            <Button Content="Clear" Margin="1,0" x:Name="clearBtn" Click="ClearBtn_Click" Focusable="False"/>
+            <ToggleButton IsChecked="True" Content="Info" Margin="1,0" ToolTip="Toggle information messages"
+                              x:Name="toggleInfo" Background="{StaticResource Editor.GreenBrush}"/>
+            <ToggleButton IsChecked="True" Content="Warn" Margin="1,0" ToolTip="Toggle warning messages"
+                              x:Name="toggleWarn" Background="{StaticResource Editor.OrangeBrush}"/>
+            <ToggleButton IsChecked="True" Content="Error" Margin="1,0" ToolTip="Toggle error messages"
+                              x:Name="toggleError" Background="{StaticResource Editor.RedBrush}"/>
+        </StackPanel>
     </Grid>
 </UserControl>
