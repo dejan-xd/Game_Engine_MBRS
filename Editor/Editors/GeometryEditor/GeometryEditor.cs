@@ -159,7 +159,7 @@ namespace Editor.Editors
             }
         }
 
-        public MeshRenderer(MeshLOD lod, MeshRenderer old)
+        public MeshRenderer(MeshLOD lod, MeshRenderer old, string oldPrimitiveType)
         {
             Debug.Assert(lod?.Meshes.Any() == true);
 
@@ -228,7 +228,7 @@ namespace Editor.Editors
             }
 
             // set camera target and position
-            if (old != null)
+            if (old != null && lod.Name == oldPrimitiveType)
             {
                 CameraTarget = old.CameraTarget;
                 CameraPosition = old.CameraPosition;
@@ -289,13 +289,13 @@ namespace Editor.Editors
             }
         }
 
-        public void SetAsset(Asset asset)
+        public void SetAsset(Asset asset, string oldPrimitiveType)
         {
             Debug.Assert(asset is Content.Geometry);
             if (asset is Content.Geometry geometry)
             {
                 Geometry = geometry;
-                MeshRenderer = new MeshRenderer(Geometry.GetLODGroup().LODs[0], MeshRenderer);
+                MeshRenderer = new MeshRenderer(Geometry.GetLODGroup().LODs[0], MeshRenderer, oldPrimitiveType);
             }
         }
     }
