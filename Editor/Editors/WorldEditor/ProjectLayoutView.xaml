@@ -6,8 +6,7 @@
              xmlns:local="clr-namespace:Editor.Editors"
              xmlns:project="clr-namespace:Editor.GameProject.ViewModel"
              mc:Ignorable="d" 
-             Focusable="True"
-             d:DataContext="{d:DesignInstance Type=project:Project, IsDesignTimeCreatable=True}"
+             d:DataContext="{d:DesignInstance Type=project:Project}"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <Grid.RowDefinitions>

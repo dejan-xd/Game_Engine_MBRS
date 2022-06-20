@@ -26,13 +26,23 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Width="180">
+                                <StackPanel.ToolTip>
+                                        <TextBlock>
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}Path: {0}&#x0a;Date: {1:dd.MM.yyyy. HH:mm:ss}">
+                                                    <Binding Path="ProjectPath"/>
+                                                    <Binding Path="Date"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                </StackPanel.ToolTip>
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="{Binding Icon}" Margin="0,0,5,0"/>
                                     <TextBlock Text="{Binding ProjectName}" FontSize="24" FontFamily="Bahnschrift Condensed"
                                                VerticalAlignment="Center"/>
                                 </StackPanel>
                                 <TextBlock Text="{Binding ProjectPath}" FontSize="8" TextTrimming="WordEllipsis"/>
-                                <TextBlock Text="{Binding Date}" FontSize="8"/>
+                                <TextBlock Text="{Binding Date, ConverterCulture='sr'}" FontSize="8"/>
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>

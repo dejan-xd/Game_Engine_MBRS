@@ -18,6 +18,8 @@ namespace Editor.Content
     /// </summary>
     public partial class PrimitiveMeshDialog : Window
     {
+        private string oldPrimitiveType;
+
         private static readonly List<ImageBrush> _textures = new();
 
         private void OnPrimitiveType_ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdatePrimitive();
@@ -38,6 +40,7 @@ namespace Editor.Content
 
             PrimitiveMeshType primitiveType = (PrimitiveMeshType)primTypeComboBox.SelectedItem;
             PrimitiveInitInfo info = new() { Type = primitiveType };
+            int smoothingAngle = 0;
 
             switch (primitiveType)
             {
@@ -52,7 +55,15 @@ namespace Editor.Content
                 case PrimitiveMeshType.Cube:
                     return;
                 case PrimitiveMeshType.UvSphere:
-                    return;
+                    {
+                        info.SegmentX = (int)xSliderUvSphere.Value;
+                        info.SegmentY = (int)ySliderUvSphere.Value;
+                        info.Size.X = Value(xScalarBoxUvSphere, 0.001f);
+                        info.Size.Y = Value(yScalarBoxUvSphere, 0.001f);
+                        info.Size.Z = Value(zScalarBoxUvSphere, 0.001f);
+                        smoothingAngle = (int)angleSliderUvSphere.Value;
+                        break;
+                    }
                 case PrimitiveMeshType.IcoSphere:
                     return;
                 case PrimitiveMeshType.Cylinder:
@@ -64,16 +75,20 @@ namespace Editor.Content
             }
 
             Geometry geometry = new();
+            geometry.ImportSettings.SmoothingAngle = smoothingAngle;
             ContentToolsAPI.CreatePrimitiveMesh(geometry, info);
-            (DataContext as GeometryEditor).SetAsset(geometry);
+            (DataContext as GeometryEditor).SetAsset(geometry, oldPrimitiveType);
             OnTexture_CheckBox_Click(textureCheckBox, null);
+            oldPrimitiveType = geometry.GetLODGroup().LODs[0].Name; // for restarting the camera position if we change mesh type
         }
 
         private static void LoadTextures()
         {
             List<Uri> uris = new()
             {
-                new Uri("pack://application:,,,/Resources/PrimitiveMeshView/PlaneTexture.png")
+                new Uri("pack://application:,,,/Resources/PrimitiveMeshView/PlaneTexture.png"),
+                new Uri("pack://application:,,,/Resources/PrimitiveMeshView/PlaneTexture.png"),
+                new Uri("pack://application:,,,/Resources/PrimitiveMeshView/Checkermap.png"),
             };
 
             _textures.Clear();
@@ -88,7 +103,7 @@ namespace Editor.Content
                 ImageBrush brush = new(imageSource);
 
                 TransformGroup tg = new();
-                tg.Children.Add(new RotateTransform(-90, 0.5, 0.5));    // rotate 90 degree
+                if (uri.AbsoluteUri.Contains("PlaneTexture")) tg.Children.Add(new RotateTransform(-90, 0.5, 0.5));    // rotate 90 degree if plane
                 tg.Children.Add(new ScaleTransform(1, -1, 0.5, 0.5));   // flip the direction of v axis
                 brush.RelativeTransform = tg;
 

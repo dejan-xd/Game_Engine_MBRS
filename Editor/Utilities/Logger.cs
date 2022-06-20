@@ -16,7 +16,7 @@ namespace Editor.Utilities
 
     public class LogMessage
     {
-        public DateTime Time { get; }
+        public string Time { get; }
         public MessageType MessageType { get; }
         public string Message { get; }
         public string File { get; }
@@ -26,7 +26,7 @@ namespace Editor.Utilities
 
         public LogMessage(MessageType type, string message, string file, string caller, int line)
         {
-            Time = DateTime.Now;
+            Time = DateTime.Now.ToString("HH:mm:ss");
             MessageType = type;
             Message = message;
             File = Path.GetFileName(file);
