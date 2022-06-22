@@ -1,4 +1,4 @@
-﻿using Editor.Common;
+using Editor.Common;
 using Editor.Utilities;
 using System;
 using System.Collections.Generic;

@@ -167,6 +167,7 @@ namespace {1} {{
             {
                 Debug.WriteLine(ex.Message);
                 Logger.Log(MessageType.Error, $"Failed to create script {scriptName.Text}");
+                throw;
             }
             finally
             {

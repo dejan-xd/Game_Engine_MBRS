@@ -178,7 +178,7 @@
                     <Label Content="Smoothing angle" VerticalAlignment="Top" Foreground="{StaticResource Editor.FontBrush}"
                            HorizontalAlignment="Left" Padding="5,0"/>
                 </Grid>
-                <Button Content="Save" Width="96" Margin="5,5" Click="OnSave_Button_Click"/>
+                <Button Content="Save" Width="96" Margin="5,5"/>
             </StackPanel>
             <!--ICOSPHERE SETTINGS-->
             <!--CYLINDER SETTINGS-->
