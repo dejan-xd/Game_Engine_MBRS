@@ -86,6 +86,7 @@ namespace Editor.GameDev
             {
                 Debug.WriteLine(ex.Message);
                 Logger.Log(MessageType.Error, "Failed to open Visual Studio");
+                throw;
             }
             finally
             {
@@ -142,6 +143,7 @@ namespace Editor.GameDev
                 Debug.WriteLine("Failed to add files to Visual Studio project");
                 Logger.Log(MessageType.Error, $"Failed to add files to {projectName} project. ({tries}/3)");
                 return false;
+                throw;
             }
             return true;
         }
