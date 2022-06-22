@@ -21,6 +21,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Resources\Icons\ExitProject.ico" />
+	  <None Remove="Resources\Icons\NewProject.ico" />
+	  <None Remove="Resources\Icons\OpenProject.ico" />
+	  <None Remove="Resources\Icons\SaveProject.ico" />
 	  <None Remove="Resources\PrimitiveMeshView\Checkermap.png" />
 	  <None Remove="Resources\PrimitiveMeshView\PlaneTexture.png" />
 	</ItemGroup>
@@ -47,6 +51,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Resource Include="Resources\Icons\ExitProject.ico" />
+	  <Resource Include="Resources\Icons\NewProject.ico" />
+	  <Resource Include="Resources\Icons\OpenProject.ico" />
+	  <Resource Include="Resources\Icons\SaveProject.ico" />
 	  <Resource Include="Resources\PrimitiveMeshView\Checkermap.png" />
 	  <Resource Include="Resources\PrimitiveMeshView\PlaneTexture.png" />
 	</ItemGroup>

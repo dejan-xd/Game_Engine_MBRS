@@ -92,6 +92,8 @@
             <Border.Effect>
                 <DropShadowEffect Opacity="0.3" BlurRadius="10" ShadowDepth="0"/>
             </Border.Effect>
+            <TextBlock Text="System Messages" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0"
+                       Foreground="{StaticResource Editor.FontBrush}"/>
         </Border>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,2,0,0" VerticalAlignment="Top">
             <Button Content="Clear" Margin="1,0" x:Name="clearBtn" Click="ClearBtn_Click" Focusable="False"/>

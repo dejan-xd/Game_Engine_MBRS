@@ -7,6 +7,13 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <StackPanel>
+        <Border Height="25" VerticalAlignment="Top" Background="{StaticResource Editor.Window.GrayBrush3}">
+            <Border.Effect>
+                <DropShadowEffect Opacity="0.3" BlurRadius="10" ShadowDepth="0"/>
+            </Border.Effect>
+            <TextBlock Text="Output" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0"
+                       Foreground="{StaticResource Editor.FontBrush}"/>
+        </Border>
         <ItemsControl ItemsSource="{Binding UndoList}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>

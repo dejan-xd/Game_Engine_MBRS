@@ -15,19 +15,11 @@ using System.Windows.Input;
 
 namespace Editor.GameProject.ViewModel
 {
-    public enum BuildConfiguration
-    {
-        Debug,
-        DebugEditor,
-        Release,
-        ReleaseEditor,
-    }
-
     [DataContract(Name = "Game", Namespace = "http://schemas.datacontract.org/2004/07/Editor.GameProject")]
     internal class Project : ViewModelBase
     {
         // PROPERTIES
-        public static string Extension { get; } = ".mbrs";
+        public static string Extension => ".mbrs";
         [DataMember]
         public string Name { get; private set; } = "New Project";
         [DataMember]
@@ -36,7 +28,6 @@ namespace Editor.GameProject.ViewModel
         public string Solution => $@"{Path}{Name}.sln";
         public string ContentPath => $@"{Path}Content\";
 
-        private static readonly string[] _buildConfigurationNames = new string[] { "Debug", "DebugEditor", "Release", "ReleaseEditor" };
         private int _buildConfig;
         [DataMember]
         public int BuildConfig
@@ -52,13 +43,13 @@ namespace Editor.GameProject.ViewModel
             }
         }
         public BuildConfiguration StandAloneBuildConfig => BuildConfig == 0 ? BuildConfiguration.Debug : BuildConfiguration.Release;
-        public BuildConfiguration DllBuildConfig => BuildConfig == 0 ? BuildConfiguration.DebugEditor : BuildConfiguration.ReleaseEditor;
+        public BuildConfiguration DLLBuildConfig => BuildConfig == 0 ? BuildConfiguration.DebugEditor : BuildConfiguration.ReleaseEditor;
 
         private string[] _availableScripts;
         public string[] AvailableScripts
         {
             get => _availableScripts;
-            set
+            private set
             {
                 if (_availableScripts != value)
                 {
@@ -68,7 +59,7 @@ namespace Editor.GameProject.ViewModel
             }
         }
 
-        [DataMember(Name = "Scenes")]
+        [DataMember(Name = nameof(Scenes))]
         private readonly ObservableCollection<Scene> _scenes = new();
         public ReadOnlyObservableCollection<Scene> Scenes { get; private set; }
 
@@ -86,7 +77,7 @@ namespace Editor.GameProject.ViewModel
             }
         }
 
-        public static Project Current => Application.Current.MainWindow.DataContext as Project;
+        public static Project Current => Application.Current.MainWindow?.DataContext as Project;
 
         public static UndoRedo UndoRedo { get; } = new UndoRedo();
 
@@ -135,7 +126,7 @@ namespace Editor.GameProject.ViewModel
             DebugStartCommand = new RelayCommand<object>(async x => await RunGame(true), x => !VisualStudio.IsDebugging() && VisualStudio.BuildDone);
             DebugStartWithoutDebuggingCommand = new RelayCommand<object>(async x => await RunGame(false), x => !VisualStudio.IsDebugging() && VisualStudio.BuildDone);
             DebugStopCommand = new RelayCommand<object>(async x => await StopGame(), x => VisualStudio.IsDebugging());
-            BuildCommand = new RelayCommand<bool>(async x => await BuildGameCodeDll(x), x => !VisualStudio.IsDebugging() && VisualStudio.BuildDone);
+            BuildCommand = new RelayCommand<bool>(async x => await BuildGameCodeDLL(x), x => !VisualStudio.IsDebugging() && VisualStudio.BuildDone);
 
             OnPropertyChanged(nameof(UndoCommand));
             OnPropertyChanged(nameof(RedoCommand));
@@ -147,8 +138,6 @@ namespace Editor.GameProject.ViewModel
             OnPropertyChanged(nameof(DebugStopCommand));
             OnPropertyChanged(nameof(BuildCommand));
         }
-
-        private static string GetConfigurationName(BuildConfiguration config) => _buildConfigurationNames[(int)config];
 
         private void AddScene(string sceneName)
         {
@@ -171,12 +160,13 @@ namespace Editor.GameProject.ViewModel
         public void Unload()
         {
             // NOTE: dont make it static
-            UnloadGameCodeDll();
+            UnloadGameCodeDLL();
             VisualStudio.CloseVisualStudio();
             UndoRedo.Reset();
+            Logger.Clear();
         }
 
-        public static void Save(Project project)
+        private static void Save(Project project)
         {
             Serializer.ToFile(project, project.FullPath);
             Logger.Log(MessageType.Info, $"Project saved to {project.FullPath}");
@@ -184,7 +174,7 @@ namespace Editor.GameProject.ViewModel
 
         private void SaveToBinary()
         {
-            string configName = GetConfigurationName(StandAloneBuildConfig);
+            string configName = VisualStudio.GetConfigurationName(StandAloneBuildConfig);
             string bin = $@"{Path}x64\{configName}\game.bin";
 
             using (BinaryWriter bw = new(File.Open(bin, FileMode.Create, FileAccess.Write)))
@@ -205,26 +195,25 @@ namespace Editor.GameProject.ViewModel
 
         private async Task RunGame(bool debug)
         {
-            string configName = GetConfigurationName(StandAloneBuildConfig);
-            await Task.Run(() => VisualStudio.BuildSolution(this, configName, debug));
+            await Task.Run(() => VisualStudio.BuildSolution(this, StandAloneBuildConfig, debug));
             if (VisualStudio.BuildSucceeded)
             {
                 SaveToBinary();
-                await Task.Run(() => VisualStudio.Run(this, configName, debug));
+                await Task.Run(() => VisualStudio.Run(this, StandAloneBuildConfig, debug));
             }
         }
 
         private async Task StopGame() => await Task.Run(() => VisualStudio.Stop());
 
-        private async Task BuildGameCodeDll(bool showWindow = true)
+        private async Task BuildGameCodeDLL(bool showWindow = true)
         {
             try
             {
-                UnloadGameCodeDll();
-                await Task.Run(() => VisualStudio.BuildSolution(this, GetConfigurationName(DllBuildConfig), showWindow));
+                UnloadGameCodeDLL();
+                await Task.Run(() => VisualStudio.BuildSolution(this, DLLBuildConfig, showWindow));
                 if (VisualStudio.BuildSucceeded)
                 {
-                    LoadGameCodeDll();
+                    LoadGameCodeDLL();
                 }
             }
             catch (Exception ex)
@@ -235,9 +224,9 @@ namespace Editor.GameProject.ViewModel
 
         }
 
-        private void LoadGameCodeDll()
+        private void LoadGameCodeDLL()
         {
-            string configName = GetConfigurationName(DllBuildConfig);
+            string configName = VisualStudio.GetConfigurationName(DLLBuildConfig);
             string dll = $@"{Path}x64\{configName}\{Name}.dll";
             AvailableScripts = null;
             if (File.Exists(dll) && EngineAPI.LoadGameCodeDll(dll) != 0)
@@ -248,11 +237,11 @@ namespace Editor.GameProject.ViewModel
             }
             else
             {
-                Logger.Log(MessageType.Warning, "Failed to load the game code DLL file. Try to build the project first");
+                Logger.Log(MessageType.Warning, "Failed to load the game code DLL file. Try to build the project first!");
             }
         }
 
-        private void UnloadGameCodeDll()
+        private void UnloadGameCodeDLL()
         {
             ActiveScene.GameEntities.Where(x => x.GetComponent<Script>() != null).ToList().ForEach(x => x.IsActive = false);
             if (EngineAPI.UnloadGameCodeDll() != 0)
@@ -270,10 +259,11 @@ namespace Editor.GameProject.ViewModel
                 Scenes = new ReadOnlyObservableCollection<Scene>(_scenes);
                 OnPropertyChanged(nameof(Scenes));
             }
-            ActiveScene = Scenes.FirstOrDefault(x => x.IsActive);
+
+            ActiveScene = _scenes.FirstOrDefault(x => x.IsActive);
             Debug.Assert(ActiveScene != null);
 
-            await BuildGameCodeDll(false);
+            await BuildGameCodeDLL(false);
 
             SetCommands();
         }
@@ -283,6 +273,7 @@ namespace Editor.GameProject.ViewModel
             Name = name;
             Path = path;
 
+            Debug.Assert(File.Exists((Path + Name + Extension).ToLower()));
             OnDeserialized(new StreamingContext());
         }
     }

@@ -1,5 +1,7 @@
 ﻿using Editor.Content;
 using Editor.GameDev;
+using Editor.GameProject;
+using Editor.GameProject.ViewModel;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -32,6 +34,26 @@ namespace Editor.Editors
             PrimitiveMeshDialog dlg = new();
             dlg.ShowDialog();
 
+        }
+
+        private void OnNewProject(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            ProjectBrowsingDialog.GoToNewProjectTab = true;
+            Project.Current?.Unload();
+            Application.Current.MainWindow.DataContext = null;
+            Application.Current.MainWindow.Close();
+        }
+
+        private void OnOpenProject(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            Project.Current?.Unload();
+            Application.Current.MainWindow.DataContext = null;
+            Application.Current.MainWindow.Close();
+        }
+
+        private void OnEditorClose(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            Application.Current.MainWindow.Close();
         }
     }
 }

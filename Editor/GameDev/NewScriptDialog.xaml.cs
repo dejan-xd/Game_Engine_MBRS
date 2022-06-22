@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -49,16 +50,10 @@ namespace {1} {{
 
         private static string GetNamespaceFromProjectName()
         {
-            string projectName = Project.Current.Name;
-            projectName = projectName.Replace(' ', '_');
-            return projectName;
-        }
+            string projectName = Project.Current.Name.Trim();
+            if (string.IsNullOrEmpty(projectName)) return string.Empty;
 
-        public NewScriptDialog()
-        {
-            InitializeComponent();
-            Owner = Application.Current.MainWindow;
-            scriptPath.Text = @"GameCode\";
+            return projectName;
         }
 
         private bool Validate()
@@ -67,14 +62,15 @@ namespace {1} {{
             string name = scriptName.Text.Trim();
             string path = scriptPath.Text.Trim();
             string errorMsg = string.Empty;
+            Regex nameRegex = new(@"^[A-Za-z_][A-Za-z0-9_]*$");
 
             if (string.IsNullOrEmpty(name))
             {
                 errorMsg = "Type in a script name.";
             }
-            else if (name.IndexOfAny(Path.GetInvalidFileNameChars()) != -1 || name.Any(x => char.IsWhiteSpace(x)))
+            else if (!nameRegex.IsMatch(name))
             {
-                errorMsg = "Invalid character(s) used in the script name.";
+                errorMsg = "Invalid character(s) used in script name.";
             }
             else if (char.IsDigit(name[0]))
             {
@@ -107,40 +103,14 @@ namespace {1} {{
 
             return isValid;
         }
-
-        private static void CreateScript(string name, string path, string solution, string projectName)
-        {
-            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-
-            string cpp = Path.GetFullPath(Path.Combine(path, $"{name}.cpp"));
-            string h = Path.GetFullPath(Path.Combine(path, $"{name}.h"));
-
-            using (StreamWriter sw = File.CreateText(cpp))
-            {
-                sw.Write(string.Format(_cppCode, name, _namespace));
-            }
-            using (StreamWriter sw = File.CreateText(h))
-            {
-                sw.Write(string.Format(_hCode, name, _namespace));
-            }
-
-            string[] files = new string[] { cpp, h };
-
-            for (int i = 0; i < 3; ++i)
-            {
-                if (!VisualStudio.AddFilesToSolution(solution, projectName, files, i + 1)) System.Threading.Thread.Sleep(1000);
-                else break;
-            }
-        }
-
-        private void ScriptName_TextChanged(object sender, TextChangedEventArgs e)
+        private void OnScriptName_TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (!Validate()) return;
             string name = scriptName.Text.Trim();
             messageTextBlock.Text = $"{name}.h and {name}.cpp will be added to {Project.Current.Name}";
         }
 
-        private void ScriptPath_TextChanged(object sender, TextChangedEventArgs e)
+        private void OnScriptPath_TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             Validate();
         }
@@ -179,6 +149,34 @@ namespace {1} {{
                 };
                 busyAnimation.BeginAnimation(OpacityProperty, fadeOut);
             }
+        }
+
+        private static void CreateScript(string name, string path, string solution, string projectName)
+        {
+            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+
+            string cpp = Path.GetFullPath(Path.Combine(path, $"{name}.cpp"));
+            string h = Path.GetFullPath(Path.Combine(path, $"{name}.h"));
+
+            using (StreamWriter sw = File.CreateText(cpp))
+            {
+                sw.Write(string.Format(_cppCode, name, _namespace));
+            }
+            using (StreamWriter sw = File.CreateText(h))
+            {
+                sw.Write(string.Format(_hCode, name, _namespace));
+            }
+
+            string[] files = new string[] { cpp, h };
+
+            VisualStudio.AddFilesToSolution(solution, projectName, files);
+        }
+
+        public NewScriptDialog()
+        {
+            InitializeComponent();
+            Owner = Application.Current.MainWindow;
+            scriptPath.Text = @"GameCode\";
         }
     }
 }
