@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text.RegularExpressions;
 
 namespace Editor.GameProject.ViewModel
 {
@@ -32,9 +33,6 @@ namespace Editor.GameProject.ViewModel
     {
         // TODO: get the path from the installation location
         private readonly string _templatePath = @"..\..\Editor\Templates";
-
-        private readonly ObservableCollection<ProjectTemplate> _projectTemplates = new();
-        public ReadOnlyObservableCollection<ProjectTemplate> ProjectTemplates { get; }
 
         private string _projectName = "NewProject";
         public string ProjectName
@@ -94,18 +92,37 @@ namespace Editor.GameProject.ViewModel
             }
         }
 
+        private readonly ObservableCollection<ProjectTemplate> _projectTemplates = new();
+        public ReadOnlyObservableCollection<ProjectTemplate> ProjectTemplates { get; }
+
         private bool ValidateProjectPath()
         {
             string path = ProjectPath;
             if (!Path.EndsInDirectorySeparator(path)) path += @"\";
             path += $@"{ProjectName}\";
+            Regex nameRegex = new(@"^[A-Za-z_][A-Za-z0-9_]*$");
 
             IsValid = false;
-            if (string.IsNullOrWhiteSpace(ProjectName.Trim())) ErrorMsg = "Type in a project name.";
-            else if (ProjectName.IndexOfAny(Path.GetInvalidFileNameChars()) != -1) ErrorMsg = "Invalid character(s) used in project name.";
-            else if (string.IsNullOrWhiteSpace(ProjectPath.Trim())) ErrorMsg = "Select a valid project folder.";
-            else if (ProjectPath.IndexOfAny(Path.GetInvalidPathChars()) != -1) ErrorMsg = "Invalid character(s) used in project path.";
-            else if (Directory.Exists(path) && Directory.EnumerateFileSystemEntries(path).Any()) ErrorMsg = "Selected project folder alderady exists and is not empty.";
+            if (string.IsNullOrWhiteSpace(ProjectName.Trim()))
+            {
+                ErrorMsg = "Type in a project name.";
+            }
+            else if (!nameRegex.IsMatch(ProjectName))
+            {
+                ErrorMsg = "Invalid character(s) used in project name.";
+            }
+            else if (string.IsNullOrWhiteSpace(ProjectPath.Trim()))
+            {
+                ErrorMsg = "Select a valid project folder.";
+            }
+            else if (ProjectPath.IndexOfAny(Path.GetInvalidPathChars()) != -1)
+            {
+                ErrorMsg = "Invalid character(s) used in project path.";
+            }
+            else if (Directory.Exists(path) && Directory.EnumerateFileSystemEntries(path).Any())
+            {
+                ErrorMsg = "Selected project folder alderady exists and is not empty.";
+            }
             else
             {
                 ErrorMsg = string.Empty;
@@ -160,14 +177,14 @@ namespace Editor.GameProject.ViewModel
             Debug.Assert(File.Exists(Path.Combine(template.TemplatePath, "MSVCSolution")));
             Debug.Assert(File.Exists(Path.Combine(template.TemplatePath, "MSVCProject")));
 
-            string engineAPIPath = Path.Combine(MainWindow.EnginePath, @"Engine\EngineAPI\");
+            string engineAPIPath = @"$(GAME_ENGINE)Engine\EngineAPI\";
             Debug.Assert(Directory.Exists(engineAPIPath));
 
             string _0 = ProjectName;
             string _1 = "{" + Guid.NewGuid().ToString().ToUpper() + "}";
             string _2_solution = "{" + Guid.NewGuid().ToString().ToUpper() + "}";
             string _2_project = engineAPIPath;
-            string _3 = MainWindow.EnginePath;
+            string _3 = "$(GAME_ENGINE)";
 
             string solution = File.ReadAllText(Path.Combine(template.TemplatePath, "MSVCSolution"));
             solution = string.Format(solution, _0, _1, _2_solution);

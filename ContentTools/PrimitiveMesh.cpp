@@ -251,7 +251,7 @@ namespace primal::tools {
 			scene.lod_groups.emplace_back(lod);
 		}
 
-		void create_cube(scene& scene, const primitive_init_info& info) {}
+		void create_cube([[maybe_unused]] scene& scene, [[maybe_unused]] const primitive_init_info& info) {}
 
 		void create_uv_sphere(scene& scene, const primitive_init_info& info) {
 			lod_group lod{};
@@ -260,11 +260,11 @@ namespace primal::tools {
 			scene.lod_groups.emplace_back(lod);
 		}
 
-		void create_ico_sphere(scene& scene, const primitive_init_info& info) {}
+		void create_ico_sphere([[maybe_unused]] scene& scene, [[maybe_unused]] const primitive_init_info& info) {}
 
-		void create_cylinder(scene& scene, const primitive_init_info& info) {}
+		void create_cylinder([[maybe_unused]] scene& scene, [[maybe_unused]] const primitive_init_info& info) {}
 
-		void create_capsule(scene& scene, const primitive_init_info& info) {}
+		void create_capsule([[maybe_unused]] scene& scene, [[maybe_unused]] const primitive_init_info& info) {}
 
 	} // anonymous namespace
 

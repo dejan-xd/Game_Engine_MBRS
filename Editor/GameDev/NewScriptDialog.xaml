@@ -90,11 +90,11 @@
                 <StackPanel VerticalAlignment="Center">
                     <DockPanel>
                         <TextBlock Text="Script name" Width="72" Style="{StaticResource LightTextBlockStyle}"/>
-                        <TextBox x:Name="scriptName" TextChanged="ScriptName_TextChanged"/>
+                        <TextBox x:Name="scriptName" TextChanged="OnScriptName_TextBox_TextChanged"/>
                     </DockPanel>
                     <DockPanel Margin="0,5,0,0">
                         <TextBlock Text="Script path" Width="72" Style="{StaticResource LightTextBlockStyle}"/>
-                        <TextBox x:Name="scriptPath" TextChanged="ScriptPath_TextChanged"/>
+                        <TextBox x:Name="scriptPath" TextChanged="OnScriptPath_TextBox_TextChanged"/>
                     </DockPanel>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,20">

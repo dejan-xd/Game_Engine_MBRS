@@ -15,6 +15,11 @@
         <sys:Boolean x:Key="True">True</sys:Boolean>
         <sys:Boolean x:Key="False">False</sys:Boolean>
     </UserControl.Resources>
+    <UserControl.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.New" Executed="OnNewProject"/>
+        <CommandBinding Command="ApplicationCommands.Open" Executed="OnOpenProject"/>
+        <CommandBinding Command="ApplicationCommands.Close" Executed="OnEditorClose"/>
+    </UserControl.CommandBindings>
     <UserControl.InputBindings>
         <KeyBinding Command="{Binding UndoCommand}" Key="Z" Modifiers="Ctrl"/>
         <KeyBinding Command="{Binding RedoCommand}" Key="Y" Modifiers="Ctrl"/>
@@ -26,10 +31,41 @@
     </UserControl.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="32"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal">
+        <Menu Grid.Row="0" Background="{StaticResource Editor.Window.GrayBrush1}">
+            <MenuItem Header="File" Style="{StaticResource MenuItemStyle}">
+                <MenuItem Header="New Project..." Command="ApplicationCommands.New">
+                    <MenuItem.Icon>
+                        <Image Source="/Resources/Icons/NewProject.ico"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Open Project..." Command="ApplicationCommands.Open">
+                    <MenuItem.Icon>
+                        <Image Source="/Resources/Icons/OpenProject.ico"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator/>
+                <MenuItem Header="Save Project" Command="{Binding SaveCommand}" InputGestureText="Ctrl+S">
+                    <MenuItem.Icon>
+                        <Image Source="/Resources/Icons/SaveProject.ico"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator/>
+                <MenuItem Header="Exit" Command="ApplicationCommands.Close" InputGestureText="Alt+F4">
+                    <MenuItem.Icon>
+                        <Image Source="/Resources/Icons/ExitProject.ico"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="Settings" IsEnabled="False" Style="{StaticResource MenuItemStyle}"></MenuItem>
+            <MenuItem Header="View" IsEnabled="False" Style="{StaticResource MenuItemStyle}"></MenuItem>
+            <MenuItem Header="Create" IsEnabled="False" Style="{StaticResource MenuItemStyle}"></MenuItem>
+            <MenuItem Header="Window" IsEnabled="False" Style="{StaticResource MenuItemStyle}"></MenuItem>
+        </Menu>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10,0,0,10">
             <Button Content="Undo" Command="{Binding UndoCommand}"/>
             <Button Content="Redo" Command="{Binding RedoCommand}" Margin="5,0" />
             <Button Content="New Script" Click="OnNewScript_Button_Click"
@@ -44,7 +80,7 @@
                     CommandParameter="{StaticResource True}"/>
 
         </StackPanel>
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="Auto"/>
@@ -55,7 +91,7 @@
                     <RowDefinition/>
                 </Grid.RowDefinitions>
                 <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
+                    <!--<Grid.ColumnDefinitions>
                         <ColumnDefinition/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
@@ -71,24 +107,24 @@
                             <controls:VectorBox X="0" Y="1" Z="2" W="3" VectorType="Vector4" Orientation="Vertical"/>
                         </StackPanel>
                     </Border>
-                    <Grid Grid.Row="0" Grid.Column="2">
-                        <Grid.RowDefinitions>
-                            <RowDefinition/>
-                            <RowDefinition/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-                        <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Background="Transparent"
+                    <Grid Grid.Row="0" Grid.Column="2">-->
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <GridSplitter Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Background="Transparent"
                                       VerticalAlignment="Stretch" HorizontalAlignment="Left" Width="5"/>
-                        <GridSplitter Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Background="Transparent"
+                    <GridSplitter Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Background="Transparent"
                                       VerticalAlignment="Top" HorizontalAlignment="Stretch" Height="5"/>
-                        <utility:RenderSurfaceView Grid.Row="0" Grid.Column="0" Margin="5,5,0,0"/>
-                        <utility:RenderSurfaceView Grid.Row="0" Grid.Column="1" Margin="5,5,0,0"/>
-                        <utility:RenderSurfaceView Grid.Row="1" Grid.Column="0" Margin="5,5,0,0"/>
-                        <utility:RenderSurfaceView Grid.Row="1" Grid.Column="1" Margin="5,5,0,0"/>
-                    </Grid>
+                    <utility:RenderSurfaceView Grid.Row="0" Grid.Column="0" Margin="0,0,2.5,2.5"/>
+                    <utility:RenderSurfaceView Grid.Row="0" Grid.Column="1" Margin="2.5,0,0,2.5"/>
+                    <utility:RenderSurfaceView Grid.Row="1" Grid.Column="0" Margin="0,2.5,2.5,0"/>
+                    <utility:RenderSurfaceView Grid.Row="1" Grid.Column="1" Margin="2.5,2.5,0,0"/>
+                    <!--</Grid>-->
                     <GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch" HorizontalAlignment="Left"
                                   Background="Transparent"/>
                 </Grid>
@@ -98,11 +134,11 @@
                         <ColumnDefinition/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-                    <utility:UndoRedoView DataContext="{Binding UndoRedo}" Grid.Column="0"
+                    <utility:UndoRedoView DataContext="{Binding UndoRedo}" Grid.Column="0" Margin="0,0,2.5,0"
                                           Background="{StaticResource Editor.Window.GrayBrush2}"/>
                     <GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch" HorizontalAlignment="Left"
                                   Background="Transparent"/>
-                    <utility:LoggerView Grid.Column="1" Margin="5,0,0,0"/>
+                    <utility:LoggerView Grid.Column="1" Margin="2.5,0,0,0"/>
                 </Grid>
             </Grid>
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Left" VerticalAlignment="Stretch" Background="Transparent"/>
