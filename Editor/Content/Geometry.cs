@@ -1,4 +1,4 @@
-﻿using Editor.Common;
+using Editor.Common;
 using Editor.Utilities;
 using System;
 using System.Collections.Generic;
@@ -7,6 +7,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace Editor.Content
 {
@@ -229,6 +232,16 @@ namespace Editor.Content
             ImportEmbededTextures = true;
             ImportAnimations = true;
         }
+
+        public void ToBinary(BinaryWriter writer)
+        {
+            writer.Write(CalculateNormals);
+            writer.Write(CalculateTangents);
+            writer.Write(SmoothingAngle);
+            writer.Write(ReverseHandedness);
+            writer.Write(ImportEmbededTextures);
+            writer.Write(ImportAnimations);
+        }
     }
 
     class Geometry : Asset
@@ -374,7 +387,20 @@ namespace Editor.Content
 
                         Hash = ContentHelper.ComputeHash(hashes.ToArray());
                         data = (writer.BaseStream as MemoryStream).ToArray();
+                        Icon = GenerateIcon(lodGroup.LODs[0]);
                     }
+
+                    Debug.Assert(data?.Length > 0);
+
+                    using (BinaryWriter writer = new(File.Open(meshFileName, FileMode.Create, FileAccess.Write)))
+                    {
+                        WriteAssetFileHeader(writer);
+                        ImportSettings.ToBinary(writer);
+                        writer.Write(data.Length);
+                        writer.Write(data);
+                    }
+
+                    savedFiles.Add(meshFileName);
                 }
             }
             catch (Exception ex)
@@ -408,6 +434,31 @@ namespace Editor.Content
             Debug.Assert(meshDataSize > 0);
             byte[] buffer = (writer.BaseStream as MemoryStream).ToArray();
             hash = ContentHelper.ComputeHash(buffer, (int)meshDataBegin, (int)meshDataSize);
+        }
+
+        private byte[] GenerateIcon(MeshLOD lod)
+        {
+            int width = 90 * 4; // 4x super sampling
+
+            BitmapSource bmp = null;
+
+            // NOTE: It's not good practice to use a WPF control (view) in the ViewModel.
+            //       But we need to make an exception for this case, for as log as we don't
+            //       have a graphics renderer that we can use for screenshots.
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                bmp = Editors.GeometryView.RenderToBitmap(new Editors.MeshRenderer(lod, null), width, width);
+                bmp = new TransformedBitmap(bmp, new ScaleTransform(0.25, 0.25, 0.5, 0.5));
+            });
+
+            using MemoryStream memStream = new();
+            memStream.SetLength(0);
+
+            PngBitmapEncoder encoder = new();
+            encoder.Frames.Add(BitmapFrame.Create(bmp));
+            encoder.Save(memStream);
+
+            return memStream.ToArray();
         }
 
         public Geometry() : base(AssetType.Mesh) { }
