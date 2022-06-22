@@ -101,7 +101,7 @@
                     <Label Content="Size" VerticalAlignment="Top" Padding="5,0" HorizontalAlignment="Left"
                            Foreground="{StaticResource Editor.FontBrush}"/>
                 </Grid>
-                <Button Content="Save" Width="96" Margin="5,5"/>
+                <Button Content="Save" Width="96" Margin="5,5" Click="OnSave_Button_Click"/>
             </StackPanel>
             <!--CUBE SETTINGS-->
             <!--UVSPHERE SETTINGS-->

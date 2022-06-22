@@ -159,7 +159,7 @@ namespace Editor.Editors
             }
         }
 
-        public MeshRenderer(MeshLOD lod, MeshRenderer old, string oldPrimitiveType)
+        public MeshRenderer(MeshLOD lod, MeshRenderer old, string oldPrimitiveType = "")
         {
             Debug.Assert(lod?.Meshes.Any() == true);
 
