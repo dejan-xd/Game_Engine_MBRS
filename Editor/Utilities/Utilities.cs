@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows.Threading;
 
 namespace Editor.Utilities
@@ -28,9 +29,9 @@ namespace Editor.Utilities
     class DelayEventTimerArgs : EventArgs
     {
         public bool RepeatEvent { get; set; }
-        public object Data { get; set; }
+        public IEnumerable<object> Data { get; set; }
 
-        public DelayEventTimerArgs(object data)
+        public DelayEventTimerArgs(IEnumerable<object> data)
         {
             Data = data;
         }
@@ -40,14 +41,18 @@ namespace Editor.Utilities
     {
         private readonly DispatcherTimer _timer;
         private readonly TimeSpan _delay;
+        private readonly List<object> _data = new();
         private DateTime _lastEventTime = DateTime.Now;
-        private object _data;
 
         public event EventHandler<DelayEventTimerArgs> Triggered;
 
         public void Trigger(object data = null)
         {
-            _data = data;
+            if (_data != null)
+            {
+                _data.Add(data);
+            }
+
             _lastEventTime = DateTime.Now;
             _timer.IsEnabled = true;
         }
@@ -62,6 +67,10 @@ namespace Editor.Utilities
             if ((DateTime.Now - _lastEventTime) < _delay) return;
             DelayEventTimerArgs eventArgs = new(_data);
             Triggered?.Invoke(this, eventArgs);
+            if (!eventArgs.RepeatEvent)
+            {
+                _data.Clear();
+            }
             _timer.IsEnabled = eventArgs.RepeatEvent;
         }
 

@@ -8,6 +8,7 @@
              xmlns:controls="clr-namespace:Editor.Utilities.Controls"
              xmlns:viewmodel="clr-namespace:Editor.GameProject.ViewModel" 
              xmlns:sys="clr-namespace:System;assembly=mscorlib" 
+             xmlns:c="clr-namespace:Editor.Content" 
              mc:Ignorable="d" Focusable="True"
              d:DesignHeight="450" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance Type=viewmodel:Project}">
@@ -125,20 +126,21 @@
                     <utility:RenderSurfaceView Grid.Row="1" Grid.Column="0" Margin="0,2.5,2.5,0"/>
                     <utility:RenderSurfaceView Grid.Row="1" Grid.Column="1" Margin="2.5,2.5,0,0"/>
                     <!--</Grid>-->
-                    <GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch" HorizontalAlignment="Left"
-                                  Background="Transparent"/>
+                    <GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch" HorizontalAlignment="Left" Background="Transparent"/>
                 </Grid>
                 <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="Transparent"/>
                 <Grid Grid.Row="1" Margin="0,5,0,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="250"/>
                         <ColumnDefinition/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
                     <utility:UndoRedoView DataContext="{Binding UndoRedo}" Grid.Column="0" Margin="0,0,2.5,0"
                                           Background="{StaticResource Editor.Window.GrayBrush2}"/>
-                    <GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch" HorizontalAlignment="Left"
-                                  Background="Transparent"/>
+                    <GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch" HorizontalAlignment="Left" Background="Transparent"/>
                     <utility:LoggerView Grid.Column="1" Margin="2.5,0,0,0"/>
+                    <GridSplitter Grid.Column="2" Width="5" VerticalAlignment="Stretch" HorizontalAlignment="Left" Background="Transparent"/>
+                    <c:ContentBrowserView Grid.Column="2" Margin="5,0,0,0"/>
                 </Grid>
             </Grid>
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Left" VerticalAlignment="Stretch" Background="Transparent"/>
