@@ -37,20 +37,8 @@ namespace Editor.Content
 
     class ContentBrowser : ViewModelBase, IDisposable
     {
-        private static readonly object _lock = new();
         private static readonly DelayEventTimer _refreshTimer = new(TimeSpan.FromMilliseconds(250));
-        private static readonly FileSystemWatcher _contentWatcher = new()
-        {
-            IncludeSubdirectories = true,
-            Filter = "",
-            NotifyFilter = NotifyFilters.CreationTime |
-                           NotifyFilters.DirectoryName |
-                           NotifyFilters.FileName |
-                           NotifyFilters.LastWrite
-        };
 
-        private static string _cacheFilePath = string.Empty;
-        private static readonly Dictionary<string, ContentInfo> _contentInfoCache = new();
         public string ContentFolder { get; }
 
         private readonly ObservableCollection<ContentInfo> _folderContent = new();
@@ -67,14 +55,25 @@ namespace Editor.Content
                     _selectedFolder = value;
                     if (!string.IsNullOrEmpty(_selectedFolder))
                     {
-                        GetFolderContent();
+                        _ = GetFolderContent();
                     }
                     OnPropertyChanged(nameof(SelectedFolder));
                 }
             }
         }
 
-        private async void GetFolderContent()
+        private void OnContentModified(object sender, ContentModifiedEventArgs e)
+        {
+            if (Path.GetDirectoryName(e.FullPath) != SelectedFolder) return;
+            _refreshTimer.Trigger();
+        }
+
+        private void Refresh(object sender, DelayEventTimerArgs e)
+        {
+            _ = GetFolderContent();
+        }
+
+        private async Task GetFolderContent()
         {
             List<ContentInfo> folderContent = new();
             await Task.Run(() =>
@@ -100,22 +99,10 @@ namespace Editor.Content
                 }
 
                 // get files
-                lock (_lock)
+                foreach (string file in Directory.GetFiles(path, $"*{Asset.AssetFileExtension}"))
                 {
-                    foreach (string file in Directory.GetFiles(path, $"*{Asset.AssetFileExtension}"))
-                    {
-                        FileInfo fileInfo = new(file);
-
-                        if (!_contentInfoCache.ContainsKey(file) || _contentInfoCache[file].DateModified.IsOlder(fileInfo.LastWriteTime))
-                        {
-                            AssetInfo info = AssetRegistry.GetAssetInfo(file) ?? Asset.GetAssetInfo(file);
-                            Debug.Assert(info != null);
-                            _contentInfoCache[file] = new ContentInfo(file, info.Icon);
-                        }
-
-                        Debug.Assert(_contentInfoCache.ContainsKey(file));
-                        folderContent.Add(_contentInfoCache[file]);
-                    }
+                    FileInfo fileInfo = new(file);
+                    folderContent.Add(ContentInfoCache.Add(file));
                 }
             }
             catch (IOException ex) { Debug.WriteLine(ex.Message); }
@@ -123,82 +110,10 @@ namespace Editor.Content
             return folderContent;
         }
 
-        private async void OnContentModified(object sender, FileSystemEventArgs e)
-        {
-            if (Path.GetDirectoryName(e.FullPath) != SelectedFolder) return;
-
-            await Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                _refreshTimer.Trigger();
-            }));
-        }
-
-        private void Refresh(object sender, DelayEventTimerArgs e)
-        {
-            GetFolderContent();
-        }
-
-        private static void SaveInfoCache(string file)
-        {
-            lock (_lock)
-            {
-                using BinaryWriter writer = new(File.Open(file, FileMode.Create, FileAccess.Write));
-                writer.Write(_contentInfoCache.Keys.Count);
-                foreach (string key in _contentInfoCache.Keys)
-                {
-                    ContentInfo info = _contentInfoCache[key];
-
-                    writer.Write(key);
-                    writer.Write(info.DateModified.ToBinary());
-                    writer.Write(info.Icon.Length);
-                    writer.Write(info.Icon);
-                }
-            }
-        }
-
-        private static void LoadInfoCache(string file)
-        {
-            if (!File.Exists(file)) return;
-
-            try
-            {
-                lock (_lock)
-                {
-                    using BinaryReader reader = new(File.Open(file, FileMode.Open, FileAccess.Read));
-                    int numEntries = reader.ReadInt32();
-                    _contentInfoCache.Clear();
-
-                    for (int i = 0; i < numEntries; ++i)
-                    {
-                        string assetFile = reader.ReadString();
-                        DateTime date = DateTime.FromBinary(reader.ReadInt64());
-                        int iconSize = reader.ReadInt32();
-                        byte[] icon = reader.ReadBytes(iconSize);
-
-                        // cache only the files that still exists
-                        if (File.Exists(assetFile))
-                        {
-                            _contentInfoCache[assetFile] = new ContentInfo(assetFile, icon, null, date);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-                Logger.Log(MessageType.Warning, "Failed to load Content Browser cache file.");
-                _contentInfoCache.Clear();
-            }
-        }
-
         public void Dispose()
         {
-            ((IDisposable)_contentWatcher).Dispose();
-            if (!string.IsNullOrEmpty(_cacheFilePath))
-            {
-                SaveInfoCache(_cacheFilePath);
-                _cacheFilePath = string.Empty;
-            }
+            ContentWatcher.ContentModified -= OnContentModified;
+            ContentInfoCache.Save();
         }
 
         public ContentBrowser(Project project)
@@ -211,19 +126,7 @@ namespace Editor.Content
             SelectedFolder = contentFolder;
             FolderContent = new ReadOnlyObservableCollection<ContentInfo>(_folderContent);
 
-            if (string.IsNullOrEmpty(_cacheFilePath))
-            {
-                _cacheFilePath = $@"{project.Path}.MBRS\ContentInfoCache.bin";
-                LoadInfoCache(_cacheFilePath);
-            }
-
-            _contentWatcher.Path = contentFolder;
-            _contentWatcher.Changed += OnContentModified;
-            _contentWatcher.Created += OnContentModified;
-            _contentWatcher.Deleted += OnContentModified;
-            _contentWatcher.Renamed += OnContentModified;
-            _contentWatcher.EnableRaisingEvents = true;
-
+            ContentWatcher.ContentModified += OnContentModified;
             _refreshTimer.Triggered += Refresh;
         }
     }
