@@ -21,6 +21,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Resources\ContentBrowser\FolderLarge.png" />
+	  <None Remove="Resources\ContentBrowser\FolderSmall.png" />
+	  <None Remove="Resources\ContentBrowser\ListView.png" />
+	  <None Remove="Resources\ContentBrowser\TileView.png" />
 	  <None Remove="Resources\Icons\ExitProject.ico" />
 	  <None Remove="Resources\Icons\NewProject.ico" />
 	  <None Remove="Resources\Icons\OpenProject.ico" />
@@ -51,6 +55,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Resource Include="Resources\ContentBrowser\FolderLarge.png" />
+	  <Resource Include="Resources\ContentBrowser\FolderSmall.png" />
+	  <Resource Include="Resources\ContentBrowser\ListView.png" />
+	  <Resource Include="Resources\ContentBrowser\TileView.png" />
 	  <Resource Include="Resources\Icons\ExitProject.ico" />
 	  <Resource Include="Resources\Icons\NewProject.ico" />
 	  <Resource Include="Resources\Icons\OpenProject.ico" />

@@ -1,7 +1,9 @@
-﻿using Editor.GameProject;
+﻿using Editor.Content;
+using Editor.GameProject;
 using Editor.GameProject.ViewModel;
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 
@@ -80,7 +82,10 @@ namespace Editor
             else
             {
                 Project.Current?.Unload();
-                DataContext = projectBroser.DataContext;
+                Project project = projectBroser.DataContext as Project;
+                Debug.Assert(project != null);
+                ContentWatcher.Reset(project.ContentPath, project.Path);
+                DataContext = project;
             }
         }
     }
