@@ -370,7 +370,9 @@ namespace Editor.Content
                 {
                     Debug.Assert(lodGroup.LODs.Any());
                     // use the name of most detailed LOD for file name
-                    string meshFileName = ContentHelper.SanitizeFileName(path + fileName + "_" + lodGroup.LODs[0].Name + AssetFileExtension);
+                    string meshFileName = ContentHelper.SanitizeFileName(_lodGroups.Count > 1 ?
+                        path + fileName + "_" + lodGroup.LODs[0].Name + AssetFileExtension :
+                        path + fileName + AssetFileExtension);
                     // NOTE: we have to make a different id for each new asset file
                     Guid = Guid.NewGuid();
                     byte[] data = null;

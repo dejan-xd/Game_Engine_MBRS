@@ -248,7 +248,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter Property="Source" TargetName="image" Value="/Resources/ContentBrowser/TileView.png"/>
+                                <Setter Property="Source" TargetName="image" Value="/Editor;component/Resources/ContentBrowser/TileView.png"/>
                                 <Setter Property="ToolTip" TargetName="border" Value="Tile view"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -267,7 +267,8 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <ListView ItemsSource="{Binding FolderContent}" Grid.Row="1" x:Name="folderListView" IsTextSearchEnabled="True" TextSearch.TextPath="FileName">
+        <ListView ItemsSource="{Binding FolderContent}" Grid.Row="1" x:Name="folderListView" IsTextSearchEnabled="True" TextSearch.TextPath="FileName"
+                  SelectionChanged="OnFolderContent_ListView_SelectionChanged">
             <ListView.Style>
                 <Style TargetType="{x:Type ListView}">
                     <Setter Property="Background" Value="{StaticResource Editor.Window.GrayBrush2}"/>

@@ -7,7 +7,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace Editor.Content
 {
@@ -37,7 +36,7 @@ namespace Editor.Content
 
     class ContentBrowser : ViewModelBase, IDisposable
     {
-        private static readonly DelayEventTimer _refreshTimer = new(TimeSpan.FromMilliseconds(250));
+        private readonly DelayEventTimer _refreshTimer = new(TimeSpan.FromMilliseconds(250));
 
         public string ContentFolder { get; }
 
