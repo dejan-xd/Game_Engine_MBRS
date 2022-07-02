@@ -1,9 +1,7 @@
 ﻿using Editor.ContentToolsAPIStructs;
 using Editor.Editors;
-using Editor.GameProject.ViewModel;
 using Editor.Utilities.Controls;
 using Editor.WrappersDLL;
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -144,18 +142,13 @@ namespace Editor.Content
 
         private void OnSave_Button_Click(object sender, RoutedEventArgs e)
         {
-            SaveFileDialog dlg = new()
-            {
-                InitialDirectory = Project.Current.ContentPath,
-                Filter = "Asset file (*.asset)|*.asset"
-            };
-
+            SaveDialog dlg = new();
             if (dlg.ShowDialog() == true)
             {
-                Debug.Assert(!string.IsNullOrEmpty(dlg.FileName));
+                Debug.Assert(!string.IsNullOrEmpty(dlg.SaveFilePath));
                 Asset asset = (DataContext as IAssetEditor).Asset;
                 Debug.Assert(asset != null);
-                asset.Save(dlg.FileName);
+                asset.Save(dlg.SaveFilePath);
             }
         }
     }
