@@ -19,6 +19,8 @@
     <ClInclude Include="Content\ContentLoader.h" />
     <ClInclude Include="Graphics\Renderer.h" />
     <ClInclude Include="Utilities\Math.h" />
+    <ClInclude Include="Utilities\FreeList.h" />
+    <ClInclude Include="Utilities\Vector.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Components\Entity.cpp" />
