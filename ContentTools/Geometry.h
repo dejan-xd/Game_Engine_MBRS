@@ -29,6 +29,10 @@ namespace primal::tools {
 		utl::vector<utl::vector<math::v2>> uv_sets;
 		utl::vector<u32> raw_indices;
 
+		// containers
+		utl::vector<u32> material_indices;
+		utl::vector<u32> material_used;
+
 		// intermediate data
 		utl::vector<vertex> vertices;
 		utl::vector<u32> indices;
