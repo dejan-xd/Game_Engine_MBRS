@@ -1,4 +1,5 @@
-﻿using Editor.GameProject.ViewModel;
+﻿using Editor.Common;
+using Editor.GameProject.ViewModel;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -131,6 +132,7 @@ namespace Editor.Content
             DataContext = null;
             InitializeComponent();
             Loaded += OnContentBrowserLoaded;
+            AllowDrop = true;
         }
 
         private void OnContentBrowserLoaded(object sender, RoutedEventArgs e)
@@ -264,6 +266,20 @@ namespace Editor.Content
             {
                 ContentBrowser vm = DataContext as ContentBrowser;
                 vm.SelectedFolder = info.FullPath;
+            }
+        }
+
+        private void OnFolderContent_ListView_Drop(object sender, DragEventArgs e)
+        {
+            ContentBrowser vm = DataContext as ContentBrowser;
+            if (vm.SelectedFolder != null && e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files?.Length > 0 && Directory.Exists(vm.SelectedFolder))
+                {
+                    _ = ContentHelper.ImportFilesAsync(files, vm.SelectedFolder);
+                    e.Handled = true;
+                }
             }
         }
 

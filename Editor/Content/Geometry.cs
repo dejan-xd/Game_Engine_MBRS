@@ -1,5 +1,7 @@
 using Editor.Common;
+using Editor.GameProject.ViewModel;
 using Editor.Utilities;
+using Editor.WrappersDLL;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -247,6 +249,7 @@ namespace Editor.Content
     class Geometry : Asset
     {
         private readonly List<LODGroup> _lodGroups = new();
+        private readonly object _lock = new();
 
         public GeometryImportSettings ImportSettings { get; } = new GeometryImportSettings();
 
@@ -355,6 +358,46 @@ namespace Editor.Content
             lod.Meshes.Add(mesh);
         }
 
+        public override void Import(string file)
+        {
+            Debug.Assert(File.Exists(file));
+            Debug.Assert(!string.IsNullOrEmpty(FullPath));
+            string extension = Path.GetExtension(file).ToLower();
+
+            SourcePath = file;
+
+            try
+            {
+                if (extension == ".fbx")
+                {
+                    ImportFbx(file);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                string msg = $"Failed to read {file} for import";
+                Debug.WriteLine(msg);
+                Logger.Log(MessageType.Error, msg);
+            }
+        }
+
+        private void ImportFbx(string file)
+        {
+            Logger.Log(MessageType.Info, $"Importing FBX file {file}");
+            string tempPath = Application.Current.Dispatcher.Invoke(() => Project.Current.TempFolder);
+            if (string.IsNullOrEmpty(tempPath)) return;
+
+            lock (_lock)
+            {
+                if (!Directory.Exists(tempPath)) Directory.CreateDirectory(tempPath);
+            }
+
+            string tempFile = $"{tempPath}{ContentHelper.GetRandomString()}.fbx";
+            File.Copy(file, tempFile, true);
+            ContentToolsAPI.ImportFbx(tempFile, this);
+        }
+
         public override IEnumerable<string> Save(string file)
         {
             Debug.Assert(_lodGroups.Any());
@@ -440,10 +483,10 @@ namespace Editor.Content
 
         private byte[] GenerateIcon(MeshLOD lod)
         {
-            int width = 90 * 4; // 4x super sampling
+            int width = ContentInfo.IconWidth * 4; // 4x super sampling
 
+            using MemoryStream memStream = new();
             BitmapSource bmp = null;
-
             // NOTE: It's not good practice to use a WPF control (view) in the ViewModel.
             //       But we need to make an exception for this case, for as log as we don't
             //       have a graphics renderer that we can use for screenshots.
@@ -451,14 +494,13 @@ namespace Editor.Content
             {
                 bmp = Editors.GeometryView.RenderToBitmap(new Editors.MeshRenderer(lod, null), width, width);
                 bmp = new TransformedBitmap(bmp, new ScaleTransform(0.25, 0.25, 0.5, 0.5));
+
+                memStream.SetLength(0);
+
+                PngBitmapEncoder encoder = new();
+                encoder.Frames.Add(BitmapFrame.Create(bmp));
+                encoder.Save(memStream);
             });
-
-            using MemoryStream memStream = new();
-            memStream.SetLength(0);
-
-            PngBitmapEncoder encoder = new();
-            encoder.Frames.Add(BitmapFrame.Create(bmp));
-            encoder.Save(memStream);
 
             return memStream.ToArray();
         }
