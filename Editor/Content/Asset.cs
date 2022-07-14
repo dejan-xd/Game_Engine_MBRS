@@ -58,7 +58,7 @@ namespace Editor.Content
         public byte[] Hash { get; protected set; }
 
         public abstract void Import(string file);
-
+        public abstract void Load(string file);
         public abstract IEnumerable<string> Save(string file);
 
         private static AssetInfo GetAssetInfo(BinaryReader reader)
@@ -81,6 +81,9 @@ namespace Editor.Content
 
             return info;
         }
+
+        public static AssetInfo TryGetAssetInfo(string file) =>
+            File.Exists(file) && Path.GetExtension(file) == AssetFileExtension ? AssetRegistry.GetAssetInfo(file) ?? GetAssetInfo(file) : null;
 
         public static AssetInfo GetAssetInfo(string file)
         {

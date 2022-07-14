@@ -1,17 +1,18 @@
 ﻿using Editor.Common;
 using Editor.Content;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 
 namespace Editor.Editors
 {
-
     // NOTE: the purpose of this class is to enable viewing 3D geometry in WPF while we don't have a graphics renderer
     //       in the game engine. When we have a renderer, this class and the WPF viewer will become obsolite.
     class MeshRendererVertexData : ViewModelBase
@@ -259,7 +260,7 @@ namespace Editor.Editors
 
     class GeometryEditor : ViewModelBase, IAssetEditor
     {
-        public Asset Asset => Geometry;
+        Asset IAssetEditor.Asset => Geometry;
 
         private Content.Geometry _geometry;
         public Content.Geometry Geometry
@@ -285,17 +286,98 @@ namespace Editor.Editors
                 {
                     _meshRenderer = value;
                     OnPropertyChanged(nameof(MeshRenderer));
+                    ObservableCollection<MeshLOD> lods = Geometry.GetLODGroup().LODs;
+                    MaxLODIndex = (lods.Count > 0) ? lods.Count - 1 : 0;
+                    OnPropertyChanged(nameof(MaxLODIndex));
+                    if (lods.Count > 1)
+                    {
+                        MeshRenderer.PropertyChanged += (s, e) =>
+                        {
+                            if (e.PropertyName == nameof(MeshRenderer.OffsetCameraPosition) && AutoLOD) ComputeLOD(lods);
+                        };
+                        ComputeLOD(lods);
+                    }
                 }
             }
         }
 
-        public void SetAsset(Asset asset, string oldPrimitiveType)
+        private bool _autoLOD = true;
+        public bool AutoLOD
+        {
+            get => _autoLOD;
+            set
+            {
+                if (_autoLOD != value)
+                {
+                    _autoLOD = value;
+                    OnPropertyChanged(nameof(AutoLOD));
+                }
+            }
+        }
+
+        public int MaxLODIndex { get; private set; }
+
+        private int _lodIndex;
+        public int LODIndex
+        {
+            get => _lodIndex;
+            set
+            {
+                ObservableCollection<MeshLOD> lods = Geometry.GetLODGroup().LODs;
+                value = Math.Clamp(value, 0, lods.Count - 1);
+                if (_lodIndex != value)
+                {
+                    _lodIndex = value;
+                    OnPropertyChanged(nameof(LODIndex));
+                    MeshRenderer = new MeshRenderer(Geometry.GetLODGroup().LODs[0], MeshRenderer);
+                }
+            }
+        }
+
+        private void ComputeLOD(IList<MeshLOD> lods)
+        {
+            if (!AutoLOD) return;
+
+            Point3D p = MeshRenderer.OffsetCameraPosition;
+            double distance = new Vector3D(p.X, p.Y, p.Z).Length;
+            for (int i = MaxLODIndex; i >= 0; --i)
+            {
+                if (lods[i].LodThreshold < distance)
+                {
+                    LODIndex = i;
+                    break;
+                }
+            }
+        }
+
+        public void SetAsset(Asset asset, string oldPrimitiveType = "")
         {
             Debug.Assert(asset is Content.Geometry);
             if (asset is Content.Geometry geometry)
             {
                 Geometry = geometry;
-                MeshRenderer = new MeshRenderer(Geometry.GetLODGroup().LODs[0], MeshRenderer, oldPrimitiveType);
+                int numLods = geometry.GetLODGroup().LODs.Count;
+                if (LODIndex >= numLods) LODIndex = numLods - 1;
+                else MeshRenderer = new MeshRenderer(Geometry.GetLODGroup().LODs[0], MeshRenderer, oldPrimitiveType);
+            }
+        }
+
+        public async void SetAsset(AssetInfo info)
+        {
+            try
+            {
+                Debug.Assert(info != null && File.Exists(info.FullPath));
+                Content.Geometry geometry = new();
+                await Task.Run(() =>
+                {
+                    geometry.Load(info.FullPath);
+                });
+
+                SetAsset(geometry);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
             }
         }
     }

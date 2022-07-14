@@ -244,6 +244,16 @@ namespace Editor.Content
             writer.Write(ImportEmbededTextures);
             writer.Write(ImportAnimations);
         }
+
+        public void FromBinary(BinaryReader reader)
+        {
+            CalculateNormals = reader.ReadBoolean();
+            CalculateTangents = reader.ReadBoolean();
+            SmoothingAngle = reader.ReadSingle();
+            ReverseHandedness = reader.ReadBoolean();
+            ImportEmbededTextures = reader.ReadBoolean();
+            ImportAnimations = reader.ReadBoolean();
+        }
     }
 
     class Geometry : Asset
@@ -256,7 +266,7 @@ namespace Editor.Content
         public LODGroup GetLODGroup(int lodGroup = 0)
         {
             Debug.Assert(lodGroup >= 0 && lodGroup < _lodGroups.Count);
-            return _lodGroups.Any() ? _lodGroups[lodGroup] : null;
+            return (lodGroup < _lodGroups.Count) ? _lodGroups[lodGroup] : null;
         }
 
         public void FromRawData(byte[] data)
@@ -398,6 +408,48 @@ namespace Editor.Content
             ContentToolsAPI.ImportFbx(tempFile, this);
         }
 
+        public override void Load(string file)
+        {
+            Debug.Assert(File.Exists(file));
+            Debug.Assert(Path.GetExtension(file).ToLower() == AssetFileExtension);
+
+            try
+            {
+                byte[] data = null;
+                using (BinaryReader reader = new(File.Open(file, FileMode.Open, FileAccess.Read)))
+                {
+                    ReadAssetFileHeader(reader);
+                    ImportSettings.FromBinary(reader);
+                    int dataLength = reader.ReadInt32();
+                    Debug.Assert(dataLength > 0);
+                    data = reader.ReadBytes(dataLength);
+                }
+
+                Debug.Assert(data.Length > 0);
+
+                using (BinaryReader reader = new(new MemoryStream(data)))
+                {
+                    LODGroup lodGroup = new LODGroup();
+                    lodGroup.Name = reader.ReadString();
+                    int lodCount = reader.ReadInt32();
+
+                    for (int i = 0; i < lodCount; ++i)
+                    {
+                        lodGroup.LODs.Add(BinaryToLOD(reader));
+                    }
+
+                    _lodGroups.Clear();
+                    _lodGroups.Add(lodGroup);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                Logger.Log(MessageType.Error, $"Failed to load geometry asset file from file: {file}");
+            }
+        }
+
         public override IEnumerable<string> Save(string file)
         {
             Debug.Assert(_lodGroups.Any());
@@ -416,8 +468,9 @@ namespace Editor.Content
                     string meshFileName = ContentHelper.SanitizeFileName(_lodGroups.Count > 1 ?
                         path + fileName + "_" + lodGroup.LODs[0].Name + AssetFileExtension :
                         path + fileName + AssetFileExtension);
-                    // NOTE: we have to make a different id for each new asset file
-                    Guid = Guid.NewGuid();
+                    // NOTE: we have to make a different id for each new asset file, but if a geometry asset file
+                    //       with the same name already exists then use its guid instead
+                    Guid = TryGetAssetInfo(meshFileName) is AssetInfo info && info.Type == Type ? info.Guid : Guid.NewGuid();
                     byte[] data = null;
                     using (BinaryWriter writer = new(new MemoryStream()))
                     {
@@ -445,6 +498,7 @@ namespace Editor.Content
                         writer.Write(data);
                     }
 
+                    Logger.Log(MessageType.Info, $"Saved geometry to {meshFileName}");
                     savedFiles.Add(meshFileName);
                 }
             }
@@ -455,6 +509,32 @@ namespace Editor.Content
             }
 
             return savedFiles;
+        }
+
+        private MeshLOD BinaryToLOD(BinaryReader reader)
+        {
+            MeshLOD lod = new();
+            lod.Name = reader.ReadString();
+            lod.LodThreshold = reader.ReadSingle();
+            int meshCount = reader.ReadInt32();
+
+            for (int i = 0; i < meshCount; ++i)
+            {
+                Mesh mesh = new()
+                {
+                    VertexSize = reader.ReadInt32(),
+                    VertexCount = reader.ReadInt32(),
+                    IndexSize = reader.ReadInt32(),
+                    IndexCount = reader.ReadInt32()
+                };
+
+                mesh.Vertices = reader.ReadBytes(mesh.VertexSize * mesh.VertexCount);
+                mesh.Indices = reader.ReadBytes(mesh.IndexSize * mesh.IndexCount);
+
+                lod.Meshes.Add(mesh);
+            }
+
+            return lod;
         }
 
         private void LODToBinary(MeshLOD lod, BinaryWriter writer, out byte[] hash)

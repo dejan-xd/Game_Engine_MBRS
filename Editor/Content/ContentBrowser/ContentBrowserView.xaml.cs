@@ -1,4 +1,5 @@
 ﻿using Editor.Common;
+using Editor.Editors;
 using Editor.GameProject.ViewModel;
 using System;
 using System.ComponentModel;
@@ -267,6 +268,69 @@ namespace Editor.Content
                 ContentBrowser vm = DataContext as ContentBrowser;
                 vm.SelectedFolder = info.FullPath;
             }
+            else if (FileAccess.HasFlag(FileAccess.Read))
+            {
+                AssetInfo assetInfo = Asset.GetAssetInfo(info.FullPath);
+                if (assetInfo != null)
+                {
+                    OpenAssetEditor(assetInfo);
+                }
+            }
+        }
+
+        private IAssetEditor OpenAssetEditor(AssetInfo info)
+        {
+            IAssetEditor editor = null;
+            try
+            {
+                switch (info.Type)
+                {
+                    case AssetType.Animation: break;
+                    case AssetType.Audio: break;
+                    case AssetType.Material: break;
+                    case AssetType.Mesh:
+                        editor = OpenEditorPanel<GeometryEditorView>(info, info.Guid, "GeometryEditor");
+                        break;
+                    case AssetType.Skeleton: break;
+                    case AssetType.Texture: break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+            return editor;
+        }
+
+        private IAssetEditor OpenEditorPanel<T>(AssetInfo info, Guid guid, string title) where T : FrameworkElement, new()
+        {
+            // first look for a window that's already open and is displaying the same asset
+            foreach (Window window in Application.Current.Windows)
+            {
+                if (window.Content is FrameworkElement content && content.DataContext is IAssetEditor editor && editor.Asset.Guid == info.Guid)
+                {
+                    window.Activate();
+                    return editor;
+                }
+            }
+
+            // if not already open in an asset editor, create a new window and load the asset
+            T newEditor = new();
+            Debug.Assert(newEditor.DataContext is IAssetEditor);
+            (newEditor.DataContext as IAssetEditor).SetAsset(info);
+
+            Window win = new()
+            {
+                Content = newEditor,
+                Title = title,
+                Owner = Application.Current.MainWindow,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Style = Application.Current.FindResource("PrimalWindowStyle") as Style
+            };
+
+            win.Show();
+            return newEditor.DataContext as IAssetEditor;
         }
 
         private void OnFolderContent_ListView_Drop(object sender, DragEventArgs e)
@@ -296,7 +360,7 @@ namespace Editor.Content
                 Application.Current.MainWindow.DataContextChanged -= OnProjectChanged;
             }
 
-                        (DataContext as ContentBrowser)?.Dispose();
+            (DataContext as ContentBrowser)?.Dispose();
             DataContext = null;
         }
     }

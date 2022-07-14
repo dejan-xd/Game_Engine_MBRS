@@ -6,6 +6,6 @@ namespace Editor.Editors
     {
         Asset Asset { get; }
 
-        void SetAsset(Asset asset, string oldPrimitiveType);
+        void SetAsset(AssetInfo asset);
     }
 }
