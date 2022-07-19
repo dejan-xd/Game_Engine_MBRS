@@ -160,7 +160,7 @@ namespace Editor.Editors
             }
         }
 
-        public MeshRenderer(MeshLOD lod, MeshRenderer old, string oldPrimitiveType = "")
+        public MeshRenderer(MeshLOD lod, MeshRenderer old, string oldMeshName = "")
         {
             Debug.Assert(lod?.Meshes.Any() == true);
 
@@ -229,7 +229,7 @@ namespace Editor.Editors
             }
 
             // set camera target and position
-            if (old != null && lod.Name == oldPrimitiveType)
+            if (old != null && lod.Name == oldMeshName)
             {
                 CameraTarget = old.CameraTarget;
                 CameraPosition = old.CameraPosition;
@@ -260,6 +260,8 @@ namespace Editor.Editors
 
     class GeometryEditor : ViewModelBase, IAssetEditor
     {
+        private string oldMeshName { get; set; }
+
         Asset IAssetEditor.Asset => Geometry;
 
         private Content.Geometry _geometry;
@@ -329,7 +331,7 @@ namespace Editor.Editors
                 {
                     _lodIndex = value;
                     OnPropertyChanged(nameof(LODIndex));
-                    MeshRenderer = new MeshRenderer(Geometry.GetLODGroup().LODs[0], MeshRenderer);
+                    MeshRenderer = new MeshRenderer(lods[value], MeshRenderer, lods[value].Name); // restart camera position if we change mesh type
                 }
             }
         }
@@ -350,7 +352,7 @@ namespace Editor.Editors
             }
         }
 
-        public void SetAsset(Asset asset, string oldPrimitiveType = "")
+        public void SetAsset(Asset asset)
         {
             Debug.Assert(asset is Content.Geometry);
             if (asset is Content.Geometry geometry)
@@ -358,7 +360,11 @@ namespace Editor.Editors
                 Geometry = geometry;
                 int numLods = geometry.GetLODGroup().LODs.Count;
                 if (LODIndex >= numLods) LODIndex = numLods - 1;
-                else MeshRenderer = new MeshRenderer(Geometry.GetLODGroup().LODs[0], MeshRenderer, oldPrimitiveType);
+                else
+                {
+                    MeshRenderer = new MeshRenderer(Geometry.GetLODGroup().LODs[0], MeshRenderer, oldMeshName);
+                    oldMeshName = geometry.GetLODGroup().LODs[0].Name;
+                }
             }
         }
 

@@ -19,8 +19,6 @@ namespace Editor.Content
     /// </summary>
     public partial class PrimitiveMeshDialog : Window
     {
-        private string oldPrimitiveType;
-
         private static readonly List<ImageBrush> _textures = new();
 
         private void OnPrimitiveType_ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdatePrimitive();
@@ -78,9 +76,8 @@ namespace Editor.Content
             Geometry geometry = new();
             geometry.ImportSettings.SmoothingAngle = smoothingAngle;
             ContentToolsAPI.CreatePrimitiveMesh(geometry, info);
-            (DataContext as GeometryEditor).SetAsset(geometry, oldPrimitiveType);
+            (DataContext as GeometryEditor).SetAsset(geometry);
             OnTexture_CheckBox_Click(textureCheckBox, null);
-            oldPrimitiveType = geometry.GetLODGroup().LODs[0].Name; // for restarting the camera position if we change mesh type
         }
 
         private static void LoadTextures()
