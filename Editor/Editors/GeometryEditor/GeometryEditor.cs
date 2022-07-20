@@ -17,6 +17,35 @@ namespace Editor.Editors
     //       in the game engine. When we have a renderer, this class and the WPF viewer will become obsolite.
     class MeshRendererVertexData : ViewModelBase
     {
+        private bool _isHighlighted;
+        public bool IsHighlighted
+        {
+            get => _isHighlighted;
+            set
+            {
+                if (_isHighlighted != value)
+                {
+                    _isHighlighted = value;
+                    OnPropertyChanged(nameof(IsHighlighted));
+                    OnPropertyChanged(nameof(Diffuse));
+                }
+            }
+        }
+
+        private bool _isIsolated;
+        public bool IsIsolated
+        {
+            get => _isIsolated;
+            set
+            {
+                if (_isIsolated != value)
+                {
+                    _isIsolated = value;
+                    OnPropertyChanged(nameof(IsIsolated));
+                }
+            }
+        }
+
         private Brush _specular = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#ff111111"));
         public Brush Specular
         {
@@ -34,7 +63,7 @@ namespace Editor.Editors
         private Brush _diffuse = Brushes.White;
         public Brush Diffuse
         {
-            get => _diffuse;
+            get => _isHighlighted ? Brushes.Orange : _diffuse;
             set
             {
                 if (_diffuse != value)
@@ -45,6 +74,7 @@ namespace Editor.Editors
             }
         }
 
+        public string Name { get; set; }
         public Point3DCollection Positions { get; } = new Point3DCollection();
         public Vector3DCollection Normals { get; } = new Vector3DCollection();
         public PointCollection UVs { get; } = new PointCollection();
@@ -178,7 +208,7 @@ namespace Editor.Editors
 
             foreach (Mesh mesh in lod.Meshes)
             {
-                MeshRendererVertexData vertexData = new();
+                MeshRendererVertexData vertexData = new() { Name = mesh.Name };
                 // Unpack all vertices
                 using (BinaryReader reader = new(new MemoryStream(mesh.Vertices)))
                 {
@@ -233,6 +263,17 @@ namespace Editor.Editors
             {
                 CameraTarget = old.CameraTarget;
                 CameraPosition = old.CameraPosition;
+
+                // NOTE: this is only for primitive meshes with multiple LODs,
+                //       because they're displayed with textures
+                foreach (MeshRendererVertexData mesh in old.Meshes)
+                {
+                    mesh.IsHighlighted = false;
+                }
+                foreach (MeshRendererVertexData mesh in Meshes)
+                {
+                    mesh.Diffuse = old.Meshes.First().Diffuse;
+                }
             }
             else
             {
