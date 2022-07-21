@@ -83,6 +83,20 @@ namespace Editor.Content
             }
         }
 
+        private string _name;
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                if (_name != value)
+                {
+                    _name = value;
+                    OnPropertyChanged(nameof(Name));
+                }
+            }
+        }
+
         public byte[] Vertices { get; set; }
         public byte[] Indices { get; set; }
     }
@@ -338,7 +352,7 @@ namespace Editor.Content
                 meshName = $"mesh_{ContentHelper.GetRandomString()}";
             }
 
-            Mesh mesh = new();
+            Mesh mesh = new() { Name = meshName };
             var lodId = reader.ReadInt32();
             mesh.VertexSize = reader.ReadInt32();
             mesh.VertexCount = reader.ReadInt32();
@@ -465,9 +479,8 @@ namespace Editor.Content
                 {
                     Debug.Assert(lodGroup.LODs.Any());
                     // use the name of most detailed LOD for file name
-                    string meshFileName = ContentHelper.SanitizeFileName(_lodGroups.Count > 1 ?
-                        path + fileName + "_" + lodGroup.LODs[0].Name + AssetFileExtension :
-                        path + fileName + AssetFileExtension);
+                    string meshFileName = ContentHelper.SanitizeFileName(
+                        path + fileName + ((_lodGroups.Count > 1) ? "_" + ((lodGroup.LODs.Count > 1) ? lodGroup.Name : lodGroup.LODs[0].Name) : string.Empty)) + AssetFileExtension;
                     // NOTE: we have to make a different id for each new asset file, but if a geometry asset file
                     //       with the same name already exists then use its guid instead
                     Guid = TryGetAssetInfo(meshFileName) is AssetInfo info && info.Type == Type ? info.Guid : Guid.NewGuid();
@@ -511,6 +524,31 @@ namespace Editor.Content
             return savedFiles;
         }
 
+        private void LODToBinary(MeshLOD lod, BinaryWriter writer, out byte[] hash)
+        {
+            writer.Write(lod.Name);
+            writer.Write(lod.LodThreshold);
+            writer.Write(lod.Meshes.Count);
+
+            long meshDataBegin = writer.BaseStream.Position;
+
+            foreach (Mesh mesh in lod.Meshes)
+            {
+                writer.Write(mesh.Name);
+                writer.Write(mesh.VertexSize);
+                writer.Write(mesh.VertexCount);
+                writer.Write(mesh.IndexSize);
+                writer.Write(mesh.IndexCount);
+                writer.Write(mesh.Vertices);
+                writer.Write(mesh.Indices);
+            }
+
+            long meshDataSize = writer.BaseStream.Position - meshDataBegin;
+            Debug.Assert(meshDataSize > 0);
+            byte[] buffer = (writer.BaseStream as MemoryStream).ToArray();
+            hash = ContentHelper.ComputeHash(buffer, (int)meshDataBegin, (int)meshDataSize);
+        }
+
         private MeshLOD BinaryToLOD(BinaryReader reader)
         {
             MeshLOD lod = new();
@@ -522,6 +560,7 @@ namespace Editor.Content
             {
                 Mesh mesh = new()
                 {
+                    Name = reader.ReadString(),
                     VertexSize = reader.ReadInt32(),
                     VertexCount = reader.ReadInt32(),
                     IndexSize = reader.ReadInt32(),
@@ -535,30 +574,6 @@ namespace Editor.Content
             }
 
             return lod;
-        }
-
-        private void LODToBinary(MeshLOD lod, BinaryWriter writer, out byte[] hash)
-        {
-            writer.Write(lod.Name);
-            writer.Write(lod.LodThreshold);
-            writer.Write(lod.Meshes.Count);
-
-            long meshDataBegin = writer.BaseStream.Position;
-
-            foreach (Mesh mesh in lod.Meshes)
-            {
-                writer.Write(mesh.VertexSize);
-                writer.Write(mesh.VertexCount);
-                writer.Write(mesh.IndexSize);
-                writer.Write(mesh.IndexCount);
-                writer.Write(mesh.Vertices);
-                writer.Write(mesh.Indices);
-            }
-
-            long meshDataSize = writer.BaseStream.Position - meshDataBegin;
-            Debug.Assert(meshDataSize > 0);
-            byte[] buffer = (writer.BaseStream as MemoryStream).ToArray();
-            hash = ContentHelper.ComputeHash(buffer, (int)meshDataBegin, (int)meshDataSize);
         }
 
         private byte[] GenerateIcon(MeshLOD lod)
