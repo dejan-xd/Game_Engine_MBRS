@@ -21,6 +21,7 @@
     <ClInclude Include="Utilities\Math.h" />
     <ClInclude Include="Utilities\FreeList.h" />
     <ClInclude Include="Utilities\Vector.h" />
+    <ClInclude Include="Utilities\IOStream.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Components\Entity.cpp" />
