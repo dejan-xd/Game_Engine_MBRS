@@ -1,0 +1,63 @@
+﻿<UserControl x:Class="Editor.GameProject.OpenProjectView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Editor.GameProject"
+             xmlns:viewModel="clr-namespace:Editor.GameProject.ViewModel"
+             mc:Ignorable="d"
+             Width="800"
+             d:DesignHeight="450" d:DesignWidth="800">
+
+    <UserControl.DataContext>
+        <viewModel:OpenProject/>
+    </UserControl.DataContext>
+    <Border CornerRadius="3" Background="{StaticResource Editor.Window.GrayBrush3}" Width="700"
+            HorizontalAlignment="Center" Margin="0,30">
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                <ListBox x:Name="projectsListBox" Width="200" Height="250" ItemsSource="{Binding Projects}"
+                     SelectedIndex="0">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemStyle}">
+                            <EventSetter Event="MouseDoubleClick" Handler="ListBoxItem_MouseDoubleClick"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Width="180">
+                                <StackPanel.ToolTip>
+                                        <TextBlock>
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}Path: {0}&#x0a;Date: {1:dd.MM.yyyy. HH:mm:ss}">
+                                                    <Binding Path="ProjectPath"/>
+                                                    <Binding Path="Date"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                </StackPanel.ToolTip>
+                                <StackPanel Orientation="Horizontal">
+                                    <Image Source="{Binding Icon}" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{Binding ProjectName}" FontSize="24" FontFamily="Bahnschrift Condensed"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding ProjectPath}" FontSize="8" TextTrimming="WordEllipsis"/>
+                                <TextBlock Text="{Binding Date, ConverterCulture='sr'}" FontSize="8"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Border Width="400" Height="250" Margin="5,0,0,0">
+                    <Border.Background>
+                        <ImageBrush ImageSource="{Binding Path=SelectedItem.Screenshot, ElementName=projectsListBox}"/>
+                    </Border.Background>
+                </Border>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" 
+                    Margin="0,30,0,0">
+                <Button x:Name="openBtn" Content="Open" Width="100" IsDefault="True" Click="OpenBtn_Click"/>
+                <Button Content="Exit" Width="100" Margin="30,0,0,0" IsCancel="True"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>
