@@ -8,6 +8,8 @@
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<Configurations>DebugEditor;ReleaseEditor</Configurations>
 		<Platforms>x64</Platforms>
+		<ApplicationIcon>Resources\Icons\GameEngine.ico</ApplicationIcon>
+		<Win32Resource></Win32Resource>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugEditor|x64'">
@@ -26,6 +28,7 @@
 	  <None Remove="Resources\ContentBrowser\ListView.png" />
 	  <None Remove="Resources\ContentBrowser\TileView.png" />
 	  <None Remove="Resources\Icons\ExitProject.ico" />
+	  <None Remove="Resources\Icons\GameEngine.ico" />
 	  <None Remove="Resources\Icons\NewProject.ico" />
 	  <None Remove="Resources\Icons\OpenProject.ico" />
 	  <None Remove="Resources\Icons\SaveProject.ico" />
@@ -60,6 +63,7 @@
 	  <Resource Include="Resources\ContentBrowser\ListView.png" />
 	  <Resource Include="Resources\ContentBrowser\TileView.png" />
 	  <Resource Include="Resources\Icons\ExitProject.ico" />
+	  <Resource Include="Resources\Icons\GameEngine.ico" />
 	  <Resource Include="Resources\Icons\NewProject.ico" />
 	  <Resource Include="Resources\Icons\OpenProject.ico" />
 	  <Resource Include="Resources\Icons\SaveProject.ico" />
