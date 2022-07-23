@@ -194,9 +194,6 @@ namespace Editor.Editors
         {
             Debug.Assert(lod?.Meshes.Any() == true);
 
-            // Calculate vertex size minus the position and normal vectors (by skipping not relevent data)
-            int offset = lod.Meshes[0].VertexSize - 3 * sizeof(float) - sizeof(int) - 2 * sizeof(short);
-
             // In order to set up camera position and target propertly, we need to figure out how big this object is
             // that we're rendering. Hence, we need to know its bounding box.
             double minX, minY, minZ; minX = minY = minZ = double.MaxValue;
@@ -210,7 +207,7 @@ namespace Editor.Editors
             {
                 MeshRendererVertexData vertexData = new() { Name = mesh.Name };
                 // Unpack all vertices
-                using (BinaryReader reader = new(new MemoryStream(mesh.Vertices)))
+                using (BinaryReader reader = new(new MemoryStream(mesh.Positions)))
                 {
                     for (int i = 0; i < mesh.VertexCount; ++i)
                     {
@@ -218,28 +215,49 @@ namespace Editor.Editors
                         float posX = reader.ReadSingle();
                         float posY = reader.ReadSingle();
                         float posZ = reader.ReadSingle();
-                        uint signs = (reader.ReadUInt32() >> 24) & 0x000000ff;
                         vertexData.Positions.Add(new Point3D(posX, posY, posZ));
 
                         // Adjust the bounding box
                         minX = Math.Min(minX, posX); maxX = Math.Max(maxX, posX);
                         minY = Math.Min(minY, posY); maxY = Math.Max(maxY, posY);
                         minZ = Math.Min(minZ, posZ); maxZ = Math.Max(maxZ, posZ);
+                    }
+                }
 
-                        // Read normals
-                        float nrmX = reader.ReadUInt16() * intervals - 1.0f;
-                        float nrmY = reader.ReadUInt16() * intervals - 1.0f;
-                        double nrmZ = Math.Sqrt(Math.Clamp(1f - (nrmX * nrmX + nrmY * nrmY), 0f, 1f)) * ((signs & 0x2) - 1f);
-                        Vector3D normal = new(nrmX, nrmY, nrmZ);
-                        normal.Normalize();
-                        vertexData.Normals.Add(normal);
-                        avgNormal += normal;
+                if (mesh.ElementsType.HasFlag(ElementsType.Normals))
+                {
+                    int tSpaceOffset = 0;
+                    if (mesh.ElementsType.HasFlag(ElementsType.Joints)) tSpaceOffset = sizeof(short) * 4; // skip joint indices.
+                    // Read tangent space
+                    using (BinaryReader reader = new(new MemoryStream(mesh.Elements)))
+                    {
+                        for (int i = 0; i < mesh.VertexCount; ++i)
+                        {
+                            uint signs = (reader.ReadUInt32() >> 24) & 0x000000ff;
+                            reader.BaseStream.Position += tSpaceOffset;
+                            // Read normals
+                            float nrmX = reader.ReadUInt16() * intervals - 1.0f;
+                            float nrmY = reader.ReadUInt16() * intervals - 1.0f;
+                            double nrmZ = Math.Sqrt(Math.Clamp(1f - (nrmX * nrmX + nrmY * nrmY), 0f, 1f)) * ((signs & 0x2) - 1f);
+                            Vector3D normal = new(nrmX, nrmY, nrmZ);
+                            normal.Normalize();
+                            vertexData.Normals.Add(normal);
+                            avgNormal += normal;
 
-                        // Read UVs (skip tangent and joint data)
-                        reader.BaseStream.Position += (offset - sizeof(float) * 2);
-                        float u = reader.ReadSingle();
-                        float v = reader.ReadSingle();
-                        vertexData.UVs.Add(new Point(u, v));
+                            // Read UVs
+                            if (mesh.ElementsType.HasFlag(ElementsType.TSpace))
+                            {
+                                reader.BaseStream.Position += sizeof(short) * 2; // skip tangents.
+                                float u = reader.ReadSingle();
+                                float v = reader.ReadSingle();
+                                vertexData.UVs.Add(new Point(u, v));
+                            }
+
+                            if (mesh.ElementsType.HasFlag(ElementsType.Joints) && mesh.ElementsType.HasFlag(ElementsType.Colors))
+                            {
+                                reader.BaseStream.Position += 4; // skip colors.
+                            }
+                        }
                     }
                 }
 
@@ -282,7 +300,6 @@ namespace Editor.Editors
                 double height = maxY - minY;
                 double depth = maxZ - minZ;
                 double radius = new Vector3D(height, width, depth).Length * 1.2;
-
                 if (avgNormal.Length > 0.8)
                 {
                     avgNormal.Normalize();
@@ -301,7 +318,7 @@ namespace Editor.Editors
 
     class GeometryEditor : ViewModelBase, IAssetEditor
     {
-        private string oldMeshName { get; set; }
+        private string _oldMeshName;
 
         Asset IAssetEditor.Asset => Geometry;
 
@@ -403,8 +420,8 @@ namespace Editor.Editors
                 if (LODIndex >= numLods) LODIndex = numLods - 1;
                 else
                 {
-                    MeshRenderer = new MeshRenderer(Geometry.GetLODGroup().LODs[0], MeshRenderer, oldMeshName);
-                    oldMeshName = geometry.GetLODGroup().LODs[0].Name;
+                    MeshRenderer = new MeshRenderer(Geometry.GetLODGroup().LODs[0], MeshRenderer, _oldMeshName);
+                    _oldMeshName = geometry.GetLODGroup().LODs[0].Name;
                 }
             }
         }

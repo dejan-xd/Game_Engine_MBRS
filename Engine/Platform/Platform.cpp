@@ -5,6 +5,9 @@ namespace primal::platform {
 
 #ifdef _WIN64
 	namespace {
+
+		bool resized{ false };
+
 		struct window_info {
 			HWND hwnd{ nullptr };
 			RECT client_area{ 0, 0, 1600, 900 };
@@ -28,35 +31,32 @@ namespace primal::platform {
 		}
 
 		LRESULT CALLBACK internal_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-			// update the window
-			window_info* info{ nullptr };
-
-			// TODO: write a test program for creating a windows and see what messages will be recived
-			//		 and implement switch cases for those we need to handle
 			switch (msg) {
+			case WM_NCCREATE:
+				// NOTE: reset last error state since the assertion will always fail 
+				//		 since we are trying to register the same class multiple times
+				DEBUG_OP(SetLastError(0));
+				// put the windows id in the user data field of window's data buffer
+				const window_id id{ windows.add() };
+				windows[id].hwnd = hwnd;
+				SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)id);
+				assert(GetLastError() == 0);
+				break;
 			case WM_DESTROY:
 				get_from_handle(hwnd).is_closed = true;
 				break;
-			case WM_EXITSIZEMOVE:
-				info = &get_from_handle(hwnd);
-				break;
 			case WM_SIZE:
-				if (wparam == SIZE_MAXIMIZED) {
-					info = &get_from_handle(hwnd);
-				}
-				break;
-			case WM_SYSCOMMAND:
-				if (wparam == SC_RESTORE) {
-					info = &get_from_handle(hwnd);
-				}
+				resized = (wparam != SIZE_MINIMIZED);
 				break;
 			default:
 				break;
 			}
 
-			if (info) {
-				assert(info->hwnd);
-				GetClientRect(info->hwnd, info->is_fullscreen ? &info->fullscreen_area : &info->client_area);
+			if (resized && GetAsyncKeyState(VK_LBUTTON) >= 0) {
+				window_info& info{ get_from_handle(hwnd) };
+				assert(info.hwnd);
+				GetClientRect(info.hwnd, info.is_fullscreen ? &info.fullscreen_area : &info.client_area);
+				resized = false;
 			}
 
 			LONG_PTR long_ptr{ GetWindowLongPtr(hwnd, 0) };
@@ -202,16 +202,15 @@ namespace primal::platform {
 			// NOTE: reset last error state since the assertion will always fail 
 			//		 since we are trying to register the same class multiple times
 			DEBUG_OP(SetLastError(0));
-
-			const window_id id{ windows.add(info) };
-			SetWindowLongPtr(info.hwnd, GWLP_USERDATA, (LONG_PTR)id);
-
 			// set in the "extra" bytes the pointer to the window callback function
 			// which handles messages for the window
 			if (callback) SetWindowLongPtr(info.hwnd, 0, (LONG_PTR)callback);
 			assert(GetLastError() == 0);
 			ShowWindow(info.hwnd, SW_SHOWNORMAL);
 			UpdateWindow(info.hwnd);
+
+			window_id id{ (id::id_type)GetWindowLongPtr(info.hwnd, GWLP_USERDATA) };
+			windows[id] = info;
 
 			return window{ id };
 		}
