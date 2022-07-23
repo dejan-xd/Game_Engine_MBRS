@@ -31,13 +31,13 @@ namespace primal::platform {
 		}
 
 		LRESULT CALLBACK internal_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+			const window_id id{ windows.add() };
 			switch (msg) {
 			case WM_NCCREATE:
 				// NOTE: reset last error state since the assertion will always fail 
 				//		 since we are trying to register the same class multiple times
 				DEBUG_OP(SetLastError(0));
 				// put the windows id in the user data field of window's data buffer
-				const window_id id{ windows.add() };
 				windows[id].hwnd = hwnd;
 				SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)id);
 				assert(GetLastError() == 0);
