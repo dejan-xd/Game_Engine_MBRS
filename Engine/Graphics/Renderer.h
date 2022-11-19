@@ -10,4 +10,14 @@ namespace primal::graphics {
         platform::window window{};
         surface surface{};
     };
+
+    enum class graphics_platform : u32 {
+        direct3d12 = 0,
+        // vulkan = 1,
+        // open_gl = 2,
+        // etc.
+    };
+
+    bool initialize(graphics_platform platfomr);
+    void shutdown();
 }
