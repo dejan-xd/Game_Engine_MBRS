@@ -52,7 +52,7 @@ namespace primal::graphics::d3d12::core {
 
 	} // anonymous namespace
 
-	bool initialization() {
+	bool initialize() {
 		// determine what is the maximum feature level that is supporter
 		// create a ID3D12Device (this is a virtual adapter).
 
