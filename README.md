@@ -1,6 +1,6 @@
 # GameEngine - Methodologies for Rapid Software Development
 
-The goal of this project is to create a game engine that will be able to work with assets, scenes, scripts and entities to create and edit a PC game. GameEngine is supporting only Windows OS platform.
+This project aims to create a game engine that can work with assets, scenes, scripts, and entities to create and edit a PC game. GameEngine is supporting only the Windows OS platform. This project is for learning purposes.
 
 ## Project Architecture
 #### General Architecture of GameEngine
@@ -9,7 +9,7 @@ The goal of this project is to create a game engine that will be able to work wi
 #### Project System Architecture
 ![](/Assets/Pictures/Project%20System%20Architecture.png)
 
-#### Project System Architecture
+#### Project System Architecture - Detailed view
 ![](/Assets/Pictures/Data%20exchange%20between%20EngineDLL.dll%20and%20GameCode.dll.png)
 
 ## How to start project
