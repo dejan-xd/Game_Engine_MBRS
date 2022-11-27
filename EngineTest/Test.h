@@ -1,6 +1,10 @@
 #pragma once
 #include <thread>
 
+#define TEST_ENTITY_COMPONENTS 0
+#define TEST_WINDOW 1
+#define TEST_RENDERER 0
+
 class test {
 public:
 	virtual bool initialize() = 0;
