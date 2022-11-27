@@ -2,8 +2,8 @@
 #include <thread>
 
 #define TEST_ENTITY_COMPONENTS 0
-#define TEST_WINDOW 1
-#define TEST_RENDERER 0
+#define TEST_WINDOW 0
+#define TEST_RENDERER 1
 
 class test {
 public:
