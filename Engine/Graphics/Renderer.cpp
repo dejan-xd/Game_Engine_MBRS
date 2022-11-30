@@ -28,4 +28,8 @@ namespace primal::graphics {
 	void shutdown() {
 		gfx.shutdown();
 	}
+
+	void render() {
+		gfx.render();
+	}
 }
