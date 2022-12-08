@@ -7,7 +7,6 @@ namespace primal::graphics {
 	struct platform_interface {
 		bool(*initialize)(void);
 		void(*shutdown)(void);
-		void(*render)(void);
 
 		struct {
 			surface(*create)(platform::window);
