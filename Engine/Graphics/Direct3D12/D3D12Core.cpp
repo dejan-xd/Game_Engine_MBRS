@@ -1,5 +1,6 @@
 #include "D3D12Core.h"
 #include "D3D12Resources.h"
+#include "D3D12Surface.h"
 
 using namespace Microsoft::WRL;
 
@@ -141,9 +142,12 @@ namespace primal::graphics::d3d12::core {
 			u32 _frame_index{ 0 };
 		};
 
+		using surface_collection = utl::free_list<d3d12_surface>;
+
 		ID3D12Device8* main_device{ nullptr };
 		IDXGIFactory7* dxgi_factory{ nullptr };
 		d3d12_command gfx_command;
+		surface_collection surfaces;
 
 		descriptor_heap rtv_desc_heap{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV };
 		descriptor_heap dsv_desc_heap{ D3D12_DESCRIPTOR_HEAP_TYPE_DSV };
@@ -154,6 +158,7 @@ namespace primal::graphics::d3d12::core {
 		u32 deferred_releases_flag[frame_buffer_count]{};
 		std::mutex deferred_releases_mutex{};
 
+		constexpr DXGI_FORMAT render_target_format{ DXGI_FORMAT_R8G8B8A8_UNORM_SRGB };
 		constexpr D3D_FEATURE_LEVEL minimum_feature_level{ D3D_FEATURE_LEVEL_11_0 };
 
 		bool failed_init() {
@@ -334,7 +339,40 @@ namespace primal::graphics::d3d12::core {
 		release(main_device);
 	}
 
-	void render() {
+	ID3D12Device* const device() { return main_device; }
+	descriptor_heap& rtv_heap() { return rtv_desc_heap; }
+	descriptor_heap& dsv_heap() { return dsv_desc_heap; }
+	descriptor_heap& srv_heap() { return srv_desc_heap; }
+	descriptor_heap& uav_heap() { return uav_desc_heap; }
+	DXGI_FORMAT default_render_target_format() { return render_target_format; }
+	u32 current_frame_index() { return gfx_command.frame_index(); }
+	void set_deferred_releases_flag() { deferred_releases_flag[current_frame_index()] = 1; }
+
+	surface create_surface(platform::window window) {
+		surface_id id{ surfaces.add(window) };
+		surfaces[id].create_swap_chain(dxgi_factory, gfx_command.command_queue(), render_target_format);
+		return surface{ id };
+	}
+
+	void remove_surface(surface_id id) {
+		gfx_command.flush();
+		surfaces.remove(id);
+	}
+
+	void resize_surface(surface_id id, u32, u32) {
+		gfx_command.flush();
+		surfaces[id].resize();
+	}
+
+	u32 surface_width(surface_id id) {
+		return surfaces[id].width();
+	}
+
+	u32 surface_height(surface_id id) {
+		return surfaces[id].height();
+	}
+
+	void render_surface(surface_id id) {
 		// Wait for the GPU to finish with the command allocator and reset the allocator once the GPU is done with it
 		// This frees the memory that was used to store the commands
 		gfx_command.begin_frame();
@@ -344,6 +382,12 @@ namespace primal::graphics::d3d12::core {
 		if (deferred_releases_flag[frame_idx]) {
 			process_deferred_releases(frame_idx);
 		}
+
+		const d3d12_surface& surface{ surfaces[id] };
+
+		// Presenting swap chain buffers happens in lockstep with frame buffers.
+		surface.present();
+
 		// Record commands
 		// ...
 		//
@@ -351,9 +395,4 @@ namespace primal::graphics::d3d12::core {
 		gfx_command.end_frame();
 	}
 
-	ID3D12Device* const device() { return main_device; }
-
-	u32 current_frame_index() { return gfx_command.frame_index(); }
-
-	void set_deferred_releases_flag() { deferred_releases_flag[current_frame_index()] = 1; }
 }
