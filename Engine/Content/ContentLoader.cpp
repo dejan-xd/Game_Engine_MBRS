@@ -54,7 +54,7 @@ namespace primal::content {
 			//		 Probably with the binary writer.
 			assert(name_length < 256);
 
-			char script_name[256];
+			char script_name[256]{};
 			memcpy(&script_name[0], data, name_length); data += name_length;
 			script_name[name_length] = 0; // make the name a zero-terminated c-string
 			script_info.script_creator = script::detail::get_script_creator(script::detail::string_hash()(script_name));
