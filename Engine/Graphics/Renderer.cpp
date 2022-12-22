@@ -4,6 +4,13 @@
 
 namespace primal::graphics {
 	namespace {
+
+		// Defines where the compiled engine shaders file is located for each one of the supported APIs
+		constexpr const char* engine_shader_paths[]{
+			".\\shaders\\d3d12\\shaders.bin",
+			// ".\\shaders\\vulkan\\shaders.bin", etc.
+		};
+
 		platform_interface gfx{};
 
 		bool set_platform_interface(graphics_platform platform) {
@@ -16,6 +23,7 @@ namespace primal::graphics {
 				return false;
 			}
 
+			assert(gfx.platform == platform);
 			return true;
 		}
 
@@ -27,6 +35,14 @@ namespace primal::graphics {
 
 	void shutdown() {
 		gfx.shutdown();
+	}
+
+	const char* get_engine_shaders_path() {
+		return engine_shader_paths[(u32)gfx.platform];
+	}
+
+	const char* get_engine_shaders_path(graphics_platform platform) {
+		return engine_shader_paths[(u32)platform];
 	}
 
 	surface create_surface(platform::window window) {
