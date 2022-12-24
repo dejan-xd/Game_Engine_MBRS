@@ -2,6 +2,7 @@
 #include "..\Platform\Platform.h"
 #include "..\Graphics\Renderer.h"
 #include "TestRenderer.h"
+#include "ShaderCompilation.h"
 
 #if TEST_RENDERER
 
@@ -63,8 +64,13 @@ void destroy_render_surface(graphics::renderer_surface& surface) {
 }
 
 bool engine_test::initialize() {
-	bool result{ graphics::initialize(graphics::graphics_platform::direct3d12) };
-	if (!result) return result;
+
+	while (!compile_shaders()) {
+		// Pop up a message box allowing the user to retry the compilation
+		if (MessageBox(nullptr, L"Failed to comiple engine shaders.", L"Shader Compilation Error", MB_RETRYCANCEL) != IDRETRY) return false;
+	}
+
+	if (!graphics::initialize(graphics::graphics_platform::direct3d12)) return false;
 
 	platform::window_init_info info[]{
 		{&win_proc, nullptr, L"Render window 1", 100, 100, 400, 800},
@@ -78,7 +84,7 @@ bool engine_test::initialize() {
 		create_render_surface(_surfaces[i], info[i]);
 	}
 
-	return result;
+	return true;
 }
 
 void engine_test::run() {
