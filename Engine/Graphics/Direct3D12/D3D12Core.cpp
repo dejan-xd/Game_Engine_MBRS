@@ -1,6 +1,7 @@
 #include "D3D12Core.h"
 #include "D3D12Surface.h"
 #include "D3D12Shaders.h"
+#include "D3D12GPass.h"
 
 using namespace Microsoft::WRL;
 
@@ -291,7 +292,7 @@ namespace primal::graphics::d3d12::core {
 		if (!gfx_command.command_queue()) return failed_init();
 
 		// initialize modules
-		if (!shaders::initialize()) return failed_init();
+		if (!(shaders::initialize() && gpass::initialize())) return failed_init();
 
 		NAME_D3D12_OBJECT(main_device, L"Main D3D12 Device");
 		NAME_D3D12_OBJECT(rtv_desc_heap.heap(), L"RTV Descriptor Heap");
@@ -312,6 +313,7 @@ namespace primal::graphics::d3d12::core {
 		}
 
 		// shutdown modules
+		gpass::shutdown();
 		shaders::shutdown();
 
 		release(dxgi_factory);

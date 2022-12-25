@@ -6,14 +6,87 @@ namespace primal::graphics::d3d12::d3dx {
 	constexpr struct {
 
 		const D3D12_HEAP_PROPERTIES default_heap{
-			D3D12_HEAP_TYPE_DEFAULT,				// Type
-			D3D12_CPU_PAGE_PROPERTY_UNKNOWN,		// CPUPageProperty
-			D3D12_MEMORY_POOL_UNKNOWN,				// MemoryPoolPreference
-			0,										// CreationNodeMask
-			0										// VisibleNodeMask
+			D3D12_HEAP_TYPE_DEFAULT,						// Type
+			D3D12_CPU_PAGE_PROPERTY_UNKNOWN,				// CPUPageProperty
+			D3D12_MEMORY_POOL_UNKNOWN,						// MemoryPoolPreference
+			0,												// CreationNodeMask
+			0												// VisibleNodeMask
 		};
 
 	} heap_properties;
+
+	constexpr struct {
+		const D3D12_RASTERIZER_DESC no_cull{
+			D3D12_FILL_MODE_SOLID,							// FillMode
+			D3D12_CULL_MODE_NONE,							// CullMode
+			0,												// FrontCounterClockwise
+			0,												// DepthBias
+			0,												// DepthBiasClamp
+			0,												// SlopeScaledDepthBias
+			1,												// DepthClipEnable
+			1,												// MultisampleEnable
+			0,												// AntialiasedLineEnable
+			0,												// ForcedSampleCount
+			D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF		// ConservativeRaster
+		};
+
+		const D3D12_RASTERIZER_DESC backface_cull{
+			D3D12_FILL_MODE_SOLID,							// FillMode
+			D3D12_CULL_MODE_BACK,							// CullMode
+			0,												// FrontCounterClockwise
+			0,												// DepthBias
+			0,												// DepthBiasClamp
+			0,												// SlopeScaledDepthBias
+			1,												// DepthClipEnable
+			1,												// MultisampleEnable
+			0,												// AntialiasedLineEnable
+			0,												// ForcedSampleCount
+			D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF		// ConservativeRaster
+		};
+
+		const D3D12_RASTERIZER_DESC frontface_cull{
+			D3D12_FILL_MODE_SOLID,							// FillMode
+			D3D12_CULL_MODE_FRONT,							// CullMode
+			0,												// FrontCounterClockwise
+			0,												// DepthBias
+			0,												// DepthBiasClamp
+			0,												// SlopeScaledDepthBias
+			1,												// DepthClipEnable
+			1,												// MultisampleEnable
+			0,												// AntialiasedLineEnable
+			0,												// ForcedSampleCount
+			D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF		// ConservativeRaster
+		};
+
+		const D3D12_RASTERIZER_DESC wireframe{
+			D3D12_FILL_MODE_WIREFRAME,						// FillMode
+			D3D12_CULL_MODE_NONE,							// CullMode
+			0,												// FrontCounterClockwise
+			0,												// DepthBias
+			0,												// DepthBiasClamp
+			0,												// SlopeScaledDepthBias
+			1,												// DepthClipEnable
+			1,												// MultisampleEnable
+			0,												// AntialiasedLineEnable
+			0,												// ForcedSampleCount
+			D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF		// ConservativeRaster
+		};
+
+	} rasterizer_state;
+
+	constexpr struct {
+		const D3D12_DEPTH_STENCIL_DESC1 disabled{
+			0,												// DepthEnable
+			D3D12_DEPTH_WRITE_MASK_ZERO,					// DepthWriteMask
+			D3D12_COMPARISON_FUNC_LESS_EQUAL,				// DepthFunc
+			0,												// StencilEnable
+			0,												// StencilReadMask
+			0,												// StencilWriteMask
+			{},												// FrontFace
+			{},												// BackFace
+			0												// DepthBoundsTestEnable
+		};
+	} depth_state;
 
 	ID3D12RootSignature* create_root_signature(const D3D12_ROOT_SIGNATURE_DESC1& desc);
 
@@ -80,6 +153,8 @@ namespace primal::graphics::d3d12::d3dx {
 		}
 	};
 
+#pragma warning(push)
+#pragma warning(disable : 4324) // disable padding warning
 	template<D3D12_PIPELINE_STATE_SUBOBJECT_TYPE type, typename T> class alignas(void*) d3d12_pipeline_state_subobject {
 	public:
 		d3d12_pipeline_state_subobject() = default;
@@ -89,6 +164,7 @@ namespace primal::graphics::d3d12::d3dx {
 		const D3D12_PIPELINE_STATE_SUBOBJECT_TYPE _type{ type };
 		T _subobject{};
 	};
+#pragma warning(pop)
 
 	// Pipeline StateSubobject (PSS) macro
 #define PSS(name, ...) using d3d12_pipeline_state_subobject_##name = d3d12_pipeline_state_subobject<__VA_ARGS__>;
