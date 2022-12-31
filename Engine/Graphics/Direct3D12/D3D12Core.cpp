@@ -70,16 +70,19 @@ namespace primal::graphics::d3d12::core {
 			}
 
 			// Signal the fence with the new fence value
-			void end_frame() {
+			void end_frame(const d3d12_surface& surface) {
 				DXCall(_cmd_list->Close());
 				ID3D12CommandList* const cmd_lists[]{ _cmd_list };
 				_cmd_queue->ExecuteCommandLists(_countof(cmd_lists), &cmd_lists[0]);
+
+				// Presenting swap chain buffers happens in lockstep with frame buffers.
+				surface.present();
 
 				u64& fence_value{ _fence_value };
 				++fence_value;
 				command_frame& frame{ _cmd_frames[_frame_index] };
 				frame.fence_value = fence_value;
-				_cmd_queue->Signal(_fence, _fence_value);
+				_cmd_queue->Signal(_fence, fence_value);
 
 				_frame_index = (_frame_index + 1) % frame_buffer_count;
 			}
@@ -150,6 +153,7 @@ namespace primal::graphics::d3d12::core {
 		IDXGIFactory7* dxgi_factory{ nullptr };
 		d3d12_command gfx_command;
 		surface_collection surfaces;
+		d3dx::d3d12_resource_barrier resource_barriers{};
 
 		descriptor_heap rtv_desc_heap{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV };
 		descriptor_heap dsv_desc_heap{ D3D12_DESCRIPTOR_HEAP_TYPE_DSV };
@@ -398,14 +402,45 @@ namespace primal::graphics::d3d12::core {
 		}
 
 		const d3d12_surface& surface{ surfaces[id] };
+		ID3D12Resource* const current_back_buffer{ surface.back_buffer() };
 
-		// Presenting swap chain buffers happens in lockstep with frame buffers.
-		surface.present();
+		d3d12_frame_info frame_info{
+			surface.width(),
+			surface.height()
+		};
+
+		gpass::set_size({ frame_info.surface_width, frame_info.surface_height });
+		d3dx::d3d12_resource_barrier& barriers{ resource_barriers };
 
 		// Record commands
-		// ...
-		//
+		cmd_list->RSSetViewports(1, &surface.viewport());
+		cmd_list->RSSetScissorRects(1, &surface.scissor_rect());
+
+		// Depth prepass
+		gpass::add_transitions_for_depth_prepass(barriers);
+		barriers.apply(cmd_list);
+		gpass::set_render_targets_for_depth_prepass(cmd_list);
+		gpass::depth_prepass(cmd_list, frame_info);
+
+		// Geometry and lighting pass
+		gpass::add_transitions_for_gpass(barriers);
+		barriers.apply(cmd_list);
+		gpass::set_render_targets_for_gpass(cmd_list);
+		gpass::render(cmd_list, frame_info);
+
+		d3dx::transition_resource(cmd_list, current_back_buffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		// Post-process
+		gpass::add_transitions_for_post_process(barriers);
+		barriers.apply(cmd_list);
+		// Will write to the current back buffer, so back buffer is a render target
+
+		// After Post-process
+		d3dx::transition_resource(cmd_list, current_back_buffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+
+		// Presenting swap chain buffers happens in lockstep with frame buffers.
+		// surface.present();
+		
 		//Done recording commands. Now execute commands, signal and increment the fence value for the next frame.
-		gfx_command.end_frame();
+		gfx_command.end_frame(surface);
 	}
 }
