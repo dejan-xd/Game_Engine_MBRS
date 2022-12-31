@@ -124,7 +124,8 @@ namespace {
 		}
 
 	private:
-		const char* _profile_strings[shader_type::count]{ "vs_6_5", "hs_6_5", "ds_6_5", "gs_6_5", "ps_6_5", "cs_6_5", "as_6_5" , "ms_6_5" };
+		// NOTE: Shader Model 6.x can also be used (AS and MS are only supported from SM6.5 on)
+		constexpr static const char* _profile_strings[]{ "vs_6_5", "hs_6_5", "ds_6_5", "gs_6_5", "ps_6_5", "cs_6_5", "as_6_5" , "ms_6_5" };
 		static_assert(_countof(_profile_strings) == shader_type::count);
 
 		ComPtr<IDxcCompiler3> _compiler{ nullptr };
@@ -134,7 +135,7 @@ namespace {
 
 	// Get the path to the compiled shaders binary file
 	decltype(auto) get_engine_shaders_path() {
-		return std::filesystem::absolute(graphics::get_engine_shaders_path(graphics::graphics_platform::direct3d12));
+		return std::filesystem::path{ graphics::get_engine_shaders_path(graphics::graphics_platform::direct3d12) };
 	}
 
 	bool compiled_shaders_are_up_to_date() {
@@ -152,7 +153,7 @@ namespace {
 
 			path = shaders_source_path;
 			path += info.file;
-			full_path = std::filesystem::absolute(path);
+			full_path = path;
 			if (!std::filesystem::exists(full_path)) return false;
 
 			auto shader_file_time = std::filesystem::last_write_time(full_path);
@@ -201,10 +202,10 @@ bool compile_shaders() {
 
 		path = shaders_source_path;
 		path += info.file;
-		full_path = std::filesystem::absolute(path);
+		full_path = path;
 		if (!std::filesystem::exists(full_path)) return false;
 		ComPtr<IDxcBlob> compiled_shader{ compiler.compile(info, full_path) };
-		if (compiled_shader->GetBufferPointer() && compiled_shader->GetBufferSize()) {
+		if (compiled_shader && compiled_shader->GetBufferPointer() && compiled_shader->GetBufferSize()) {
 			shaders.emplace_back(std::move(compiled_shader));
 		}
 		else {
