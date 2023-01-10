@@ -27,9 +27,12 @@
     <ClInclude Include="Components\Script.h" />
     <ClInclude Include="Components\Transform.h" />
     <ClInclude Include="Content\ContentLoader.h" />
+    <ClInclude Include="Content\ContentToEngine.h" />
     <ClInclude Include="EngineAPI\GameEntity.h" />
     <ClInclude Include="EngineAPI\ScriptComponent.h" />
     <ClInclude Include="EngineAPI\TransformComponent.h" />
+    <ClInclude Include="Graphics\Direct3D12\D3D12Content.h" />
+    <ClInclude Include="Graphics\Direct3D12\D3D12Upload.h" />
     <ClInclude Include="Graphics\Direct3D12\D3D12CommonHeaders.h" />
     <ClInclude Include="Graphics\Direct3D12\D3D12Core.h" />
     <ClInclude Include="Graphics\Direct3D12\D3D12GPass.h" />
@@ -58,6 +61,7 @@
     <ClCompile Include="Content\ContentLoader.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
     <ClCompile Include="Core\Main.cpp" />
+    <ClCompile Include="Graphics\Direct3D12\D3D12Content.cpp" />
     <ClCompile Include="Graphics\Direct3D12\D3D12Core.cpp" />
     <ClCompile Include="Graphics\Direct3D12\D3D12GPass.cpp" />
     <ClCompile Include="Graphics\Direct3D12\D3D12Helpers.cpp" />
@@ -66,6 +70,7 @@
     <ClCompile Include="Graphics\Direct3D12\D3D12Resources.cpp" />
     <ClCompile Include="Graphics\Direct3D12\D3D12Shaders.cpp" />
     <ClCompile Include="Graphics\Direct3D12\D3D12Surface.cpp" />
+    <ClCompile Include="Graphics\Direct3D12\D3D12Upload.cpp" />
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="Platform\Platform.cpp" />
   </ItemGroup>

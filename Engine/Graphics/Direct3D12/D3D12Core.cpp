@@ -3,6 +3,7 @@
 #include "D3D12Shaders.h"
 #include "D3D12GPass.h"
 #include "D3D12PostProcess.h"
+#include "D3D12Upload.h"
 
 using namespace Microsoft::WRL;
 
@@ -51,6 +52,7 @@ namespace primal::graphics::d3d12::core {
 
 				_fence_event = CreateEventEx(nullptr, nullptr, 0, EVENT_ALL_ACCESS);
 				assert(_fence_event);
+				if (!_fence_event) goto _error;
 
 				return;
 
@@ -301,7 +303,7 @@ namespace primal::graphics::d3d12::core {
 		if (!gfx_command.command_queue()) return failed_init();
 
 		// initialize modules
-		if (!(shaders::initialize() && gpass::initialize() && fx::initialize())) return failed_init();
+		if (!(shaders::initialize() && gpass::initialize() && fx::initialize() && upload::initialize())) return failed_init();
 
 		NAME_D3D12_OBJECT(main_device, L"Main D3D12 Device");
 		NAME_D3D12_OBJECT(rtv_desc_heap.heap(), L"RTV Descriptor Heap");
@@ -322,6 +324,7 @@ namespace primal::graphics::d3d12::core {
 		}
 
 		// shutdown modules
+		upload::shutdown();
 		fx::shutdown();
 		gpass::shutdown();
 		shaders::shutdown();
