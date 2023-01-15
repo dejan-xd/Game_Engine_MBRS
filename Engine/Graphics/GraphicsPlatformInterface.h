@@ -1,7 +1,6 @@
 #pragma once
 #include "CommonHeaders.h"
 #include "Renderer.h"
-#include "Platform/Window.h"
 
 namespace primal::graphics {
 	struct platform_interface {
@@ -16,6 +15,13 @@ namespace primal::graphics {
 			u32(*height)(surface_id);
 			void(*render)(surface_id);
 		} surface;
+
+		struct {
+			camera(*create)(camera_init_info);
+			void(*remove)(camera_id);
+			void(*set_parameter)(camera_id, camera_parameter::parameter, const void* const, u32);
+			void(*get_parameter)(camera_id, camera_parameter::parameter, void* const, u32);
+		} camera;
 
 		struct {
 			id::id_type(*add_submesh)(const u8*&);
