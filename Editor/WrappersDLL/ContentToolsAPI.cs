@@ -14,7 +14,7 @@ namespace Editor.ContentToolsAPIStructs
         public byte CalculateNormals = 0;
         public byte CalculateTangents = 1;
         public byte ReverseHandedness = 0;
-        public byte ImportEmbededTextures = 1;
+        public byte ImportEmbeddedTextures = 1;
         public byte ImportAnimations = 1;
 
         private byte ToByte(bool value) => value ? (byte)1 : (byte)0;
@@ -27,7 +27,7 @@ namespace Editor.ContentToolsAPIStructs
             CalculateNormals = ToByte(settings.CalculateNormals);
             CalculateTangents = ToByte(settings.CalculateTangents);
             ReverseHandedness = ToByte(settings.ReverseHandedness);
-            ImportEmbededTextures = ToByte(settings.ImportEmbededTextures);
+            ImportEmbeddedTextures = ToByte(settings.ImportEmbeddedTextures);
             ImportAnimations = ToByte(settings.ImportAnimations);
         }
     }

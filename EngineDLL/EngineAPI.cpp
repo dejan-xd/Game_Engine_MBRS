@@ -1,6 +1,6 @@
 #include "Common.h"
 #include "CommonHeaders.h"
-#include "Engine/Components/Script.h"
+#include "Components/Script.h"
 #include "Graphics/Renderer.h"
 #include "Platform/PlatformTypes.h"
 #include "Platform/Platform.h"
