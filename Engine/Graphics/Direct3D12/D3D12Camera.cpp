@@ -201,7 +201,7 @@ namespace primal::graphics::d3d12::camera {
 		math::v3 pos{ entity.transform().position() };
 		math::v3 dir{ entity.transform().orientation() };
 		XMVECTOR position{ XMLoadFloat3(&pos) };
-		XMVECTOR direction{ XMLoadFloat3(&pos) };
+		XMVECTOR direction{ XMLoadFloat3(&dir) };
 		_view = XMMatrixLookToRH(position, direction, _up);
 
 		if (_is_dirty) {
