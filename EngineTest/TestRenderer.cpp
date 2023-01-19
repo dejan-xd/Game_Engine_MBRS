@@ -179,7 +179,7 @@ void destroy_render_surface(graphics::renderer_surface& surface) {
 bool test_initialize() {
 	while (!compile_shaders()) {
 		// Pop up a message box allowing the user to retry the compilation
-		if (MessageBox(nullptr, L"Failed to comiple engine shaders.", L"Shader Compilation Error", MB_RETRYCANCEL) != IDRETRY) return false;
+		if (MessageBox(nullptr, L"Failed to compile engine shaders.", L"Shader Compilation Error", MB_RETRYCANCEL) != IDRETRY) return false;
 	}
 
 	if (!graphics::initialize(graphics::graphics_platform::direct3d12)) return false;

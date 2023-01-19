@@ -1,4 +1,5 @@
 #pragma once
+#include "CommonHeaders.h"
 
 struct shader_type {
 	enum type : u32 {
@@ -21,4 +22,5 @@ struct shader_file_info {
 	shader_type::type type;
 };
 
+std::unique_ptr<u8[]> compile_shader(shader_file_info info, const char* file_path);
 bool compile_shaders();

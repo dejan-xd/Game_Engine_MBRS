@@ -92,6 +92,18 @@ namespace primal::graphics {
 		}
 	};
 
+	struct primitive_topology {
+		enum type : u32 {
+			point_list = 1,
+			line_list,
+			line_strip,
+			triangle_list,
+			triangle_strip,
+
+			count
+		};
+	};
+
 	enum class graphics_platform : u32 {
 		direct3d12 = 0,
 		// vulkan = 1,
