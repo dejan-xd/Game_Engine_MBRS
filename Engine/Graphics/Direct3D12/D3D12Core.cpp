@@ -5,6 +5,9 @@
 #include "D3D12PostProcess.h"
 #include "D3D12Upload.h"
 
+extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 608; }
+extern "C" { __declspec(dllexport) extern const char8_t* D3D12SDKPath = u8".\\D3D12\\"; }
+
 using namespace Microsoft::WRL;
 
 namespace primal::graphics::d3d12::core {
@@ -248,7 +251,9 @@ namespace primal::graphics::d3d12::core {
 
 		u32 dxgi_factory_flags{ 0 };
 #ifdef _DEBUG
-		//Enable debugging layer. Requires "Graphics Tools" optional feature
+		// Enable debugging layer. Requires "Graphics Tools" optional feature
+		// Comment debugging layer to stop "The thread 'name' has exited with code 0 (0x0)." messages in the Output
+		// Leave it for now, it doesn't change anything since it is for debugging purposes
 		{
 			ComPtr<ID3D12Debug3> debug_interface;
 			if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debug_interface)))) {
@@ -282,6 +287,8 @@ namespace primal::graphics::d3d12::core {
 		DXCall(hr = D3D12CreateDevice(main_adapter.Get(), max_feature_level, IID_PPV_ARGS(&main_device)));
 		if (FAILED(hr)) return failed_init();
 
+		// Comment debugging layer to stop "The thread 'name' has exited with code 0 (0x0)." messages in the Output
+		// Leave it for now, it doesn't change anything since it is for debugging purposes
 #ifdef _DEBUG
 		{
 			ComPtr<ID3D12InfoQueue> info_queue;
