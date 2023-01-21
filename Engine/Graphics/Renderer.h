@@ -26,7 +26,7 @@ namespace primal::graphics {
 
 	struct renderer_surface {
 		platform::window window{};
-		surface surface{};
+		primal::graphics::surface surface{};
 	};
 
 	struct camera_parameter {

@@ -3,12 +3,13 @@
 
 // C/C++
 // NOTE: don't put here any headers that include std::vector or std::deque
-#include <stdint.h>
+#include <cstdint>
 #include <assert.h>
 #include <typeinfo>
 #include <memory>
 #include <unordered_map>
 #include <mutex>
+#include <cstring>
 
 #if defined(_WIN64)
 #include <DirectXMath.h>
