@@ -21,7 +21,7 @@ namespace Editor.GameDev
     internal static class VisualStudio
     {
         private static readonly ManualResetEventSlim _resetEvent = new(false);
-        private static readonly string _progID = "VisualStudio.DTE.16.0";   //  supporting only Visual Studio 2019
+        private static readonly string _progID = "VisualStudio.DTE.17.0";   //  supporting only Visual Studio 2022
         private static readonly object _lock = new();
         private static readonly string[] _buildConfigurationNames = new string[] { "Debug", "DebugEditor", "Release", "ReleaseEditor" };
         private static EnvDTE80.DTE2 _vsInstance = null;
@@ -244,8 +244,8 @@ namespace Editor.GameDev
 
             CallOnSTAThread(() =>
             {
-                if (!_vsInstance.Solution.IsOpen) _vsInstance.Solution.Open(project.Solution);
                 _vsInstance.MainWindow.Visible = showWindow;
+                if (!_vsInstance.Solution.IsOpen) _vsInstance.Solution.Open(project.Solution);
                 _vsInstance.Events.BuildEvents.OnBuildProjConfigBegin += OnBuildSolutionBegin;
                 _vsInstance.Events.BuildEvents.OnBuildProjConfigDone += OnBuildSolutionDone;
             });
