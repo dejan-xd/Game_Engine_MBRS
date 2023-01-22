@@ -61,14 +61,14 @@ namespace primal::tools {
 					m.positions.emplace_back(position.x * info.size.x, position.y * info.size.y, position.z * info.size.z);
 
 					// NOTE: commented temporary for testing purposes
-					//v2 uv{ u_range.x, 1.f - v_range.x };
-					//uv.x += i * u_step;
-					//uv.y -= j * v_step;
+					v2 uv{ u_range.x, 1.f - v_range.x };
+					uv.x += i * u_step;
+					uv.y -= j * v_step;
 
 					// NOTE: delete this block of code and uncomment code above after testing is done
-					v2 uv{ 0, 1.f };
-					uv.x += (i % 2);
-					uv.y -= (j % 2);
+					//v2 uv{ 0, 1.f };
+					//uv.x += (i % 2);
+					//uv.y -= (j % 2);
 
 					uvs.emplace_back(uv);
 				}

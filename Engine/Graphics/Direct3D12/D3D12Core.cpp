@@ -4,6 +4,7 @@
 #include "D3D12GPass.h"
 #include "D3D12PostProcess.h"
 #include "D3D12Upload.h"
+#include "D3D12Content.h"
 
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 608; }
 extern "C" { __declspec(dllexport) extern const char8_t* D3D12SDKPath = u8".\\D3D12\\"; }
@@ -250,10 +251,11 @@ namespace primal::graphics::d3d12::core {
 		if (main_device) shutdown();
 
 		u32 dxgi_factory_flags{ 0 };
+
 #ifdef _DEBUG
 		// Enable debugging layer. Requires "Graphics Tools" optional feature
-		// Comment debugging layer to stop "The thread 'name' has exited with code 0 (0x0)." messages in the Output
-		// Leave it for now, it doesn't change anything since it is for debugging purposes
+		// NOTE: Comment debugging layer to stop "The thread 'name' has exited with code 0 (0x0)." messages in the Output
+		//		 Leave it for now, it doesn't change anything since it is for debugging purposes
 		{
 			ComPtr<ID3D12Debug3> debug_interface;
 			if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debug_interface)))) {
@@ -287,8 +289,8 @@ namespace primal::graphics::d3d12::core {
 		DXCall(hr = D3D12CreateDevice(main_adapter.Get(), max_feature_level, IID_PPV_ARGS(&main_device)));
 		if (FAILED(hr)) return failed_init();
 
-		// Comment debugging layer to stop "The thread 'name' has exited with code 0 (0x0)." messages in the Output
-		// Leave it for now, it doesn't change anything since it is for debugging purposes
+		// NOTE: Comment debugging layer to stop "The thread 'name' has exited with code 0 (0x0)." messages in the Output
+		//		 Leave it for now, it doesn't change anything since it is for debugging purposes
 #ifdef _DEBUG
 		{
 			ComPtr<ID3D12InfoQueue> info_queue;
@@ -310,7 +312,8 @@ namespace primal::graphics::d3d12::core {
 		if (!gfx_command.command_queue()) return failed_init();
 
 		// initialize modules
-		if (!(shaders::initialize() && gpass::initialize() && fx::initialize() && upload::initialize())) return failed_init();
+		if (!(shaders::initialize() && gpass::initialize() && fx::initialize() && upload::initialize() && content::initialize()))
+			return failed_init();
 
 		NAME_D3D12_OBJECT(main_device, L"Main D3D12 Device");
 		NAME_D3D12_OBJECT(rtv_desc_heap.heap(), L"RTV Descriptor Heap");
@@ -331,6 +334,7 @@ namespace primal::graphics::d3d12::core {
 		}
 
 		// shutdown modules
+		content::shutdown();
 		upload::shutdown();
 		fx::shutdown();
 		gpass::shutdown();
@@ -354,6 +358,8 @@ namespace primal::graphics::d3d12::core {
 		//		 To finally release their resources we call process_deferred_releases once more.
 		process_deferred_releases(0);
 
+		// NOTE: Comment debugging layer to stop "The thread 'name' has exited with code 0 (0x0)." messages in the Output
+		//		 Leave it for now, it doesn't change anything since it is for debugging purposes
 #ifdef _DEBUG
 		{
 			{

@@ -218,4 +218,12 @@ namespace primal::graphics {
 	void remove_submesh(id::id_type id) {
 		gfx.resources.remove_submesh(id);
 	}
+
+	id::id_type add_material(material_init_info info) {
+		return gfx.resources.add_material(info);
+	}
+
+	void remove_material(id::id_type id) {
+		gfx.resources.remove_material(id);
+	}
 }
