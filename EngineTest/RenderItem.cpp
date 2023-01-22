@@ -1,6 +1,7 @@
 #include <filesystem>
 #include "CommonHeaders.h"
 #include "Content/ContentToEngine.h"
+#include "Graphics/Renderer.h"
 #include "ShaderCompilation.h"
 #include "Components/Entity.h"
 
@@ -13,6 +14,7 @@ namespace {
 	id::id_type model_id{ id::invalid_id };
 	id::id_type vs_id{ id::invalid_id };
 	id::id_type ps_id{ id::invalid_id };
+	id::id_type mtl_id{ id::invalid_id };
 
 	std::unordered_map<id::id_type, id::id_type> render_item_entity_map;
 
@@ -47,6 +49,14 @@ namespace {
 		ps_id = content::add_shader(pixel_shader.get());
 	}
 
+	void create_material() {
+		graphics::material_init_info info{};
+		info.shader_ids[graphics::shader_type::vertex] = vs_id;
+		info.shader_ids[graphics::shader_type::pixel] = ps_id;
+		info.type = graphics::material_type::opaque;
+		mtl_id = content::create_resource(&info, content::asset_type::material);
+	}
+
 } // anonymous namespace
 
 id::id_type create_render_item(id::id_type entity_id) {
@@ -61,6 +71,7 @@ id::id_type create_render_item(id::id_type entity_id) {
 	_1.join();
 	_2.join();
 	// add a render item using the model and its materials
+	create_material();
 
 	// TODO: add add_render_item in renderer
 	id::id_type item_id{ 0 };
@@ -79,6 +90,9 @@ void destroy_render_item(id::id_type item_id) {
 	}
 
 	// remove material
+	if (id::is_valid(mtl_id)) {
+		content::destroy_resource(mtl_id, content::asset_type::material);
+	}
 
 	// remove shaders and textures
 	if (id::is_valid(vs_id)) {
