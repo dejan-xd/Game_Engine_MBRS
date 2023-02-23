@@ -249,8 +249,8 @@ namespace primal::graphics::d3d12::core {
 			XMStoreFloat4x4A(&data.InvViewProjection, camera.inverse_view_projection());
 			XMStoreFloat3(&data.CameraPosition, camera.position());
 			XMStoreFloat3(&data.CameraDirection, camera.direction());
-			data.ViewWidth = surface.width();
-			data.ViewHeight = surface.height();
+			data.ViewWidth = (f32)surface.width();
+			data.ViewHeight = (f32)surface.height();
 			data.DeltaTime = delta_time;
 
 			// NOTE: be careful not to read from this buffer. Reads are really really slow.
@@ -262,8 +262,8 @@ namespace primal::graphics::d3d12::core {
 				&info,
 				&camera,
 				cbuffer.gpu_address(shader_data),
-				data.ViewWidth,
-				data.ViewHeight,
+				surface.width(),
+				surface.height(),
 				frame_idx,
 				delta_time
 			};
@@ -474,7 +474,7 @@ namespace primal::graphics::d3d12::core {
 
 		const u32 frame_idx{ current_frame_index() };
 
-		// Reset (clear) the global constant buffer for the urrent frame
+		// Reset (clear) the global constant buffer for the current frame
 		constant_buffer& cbuffer{ constant_buffers[frame_idx] };
 		cbuffer.clear();
 

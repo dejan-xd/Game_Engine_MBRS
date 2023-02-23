@@ -460,7 +460,7 @@ namespace Editor.Content
             try
             {
                 byte[] data = null;
-                using (BinaryReader reader = new(File.Open(file, FileMode.Open, FileAccess.Read)))
+                using (var reader = new BinaryReader(File.Open(file, FileMode.Open, FileAccess.Read)))
                 {
                     ReadAssetFileHeader(reader);
                     ImportSettings.FromBinary(reader);
@@ -473,9 +473,11 @@ namespace Editor.Content
 
                 using (BinaryReader reader = new(new MemoryStream(data)))
                 {
-                    LODGroup lodGroup = new();
-                    lodGroup.Name = reader.ReadString();
-                    int lodGroupCount = reader.ReadInt32();
+                    LODGroup lodGroup = new()
+                    {
+                        Name = reader.ReadString()
+                    };
+                    var lodGroupCount = reader.ReadInt32();
 
                     for (int i = 0; i < lodGroupCount; ++i)
                     {
@@ -486,15 +488,15 @@ namespace Editor.Content
                     _lodGroups.Add(lodGroup);
                 }
 
-                // for esting, remove later!
-                // PackForEngine();
-                //
+                // For Testing. Remove later!
+                PackForEngine();
+                // For Testing. Remove later!
 
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
-                Logger.Log(MessageType.Error, $"Failed to load geometry asset file from file: {file}");
+                Logger.Log(MessageType.Error, $"Failed to load geometry asset from file: {file}");
             }
         }
 

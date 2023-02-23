@@ -18,8 +18,8 @@ using namespace primal;
 #define ENABLE_TEST_WORKERS 0
 
 constexpr u32 num_threads{ 8 };
-bool          shutdown{ false };
-std::thread   workers[num_threads];
+bool shutdown{ false };
+std::thread workers[num_threads];
 
 utl::vector<u8> buffer(1024 * 1024, 0);
 // Test worker for upload context
@@ -48,20 +48,21 @@ void joint_test_workers() {
 }
 ////////////////////////////////////////
 
-struct {
+struct camera_surface {
 	game_entity::entity entity{};
 	graphics::camera camera{};
-} camera;
+	graphics::render_surface surface{};
+};
 
 id::id_type item_id{ id::invalid_id };
 id::id_type model_id{ id::invalid_id };
 
-graphics::renderer_surface _surfaces[4];
+camera_surface _surfaces[4]{};
 time_it timer{};
 
 bool resized{ false };
 bool is_restarting{ false };
-void destroy_render_surface(graphics::renderer_surface& surface);
+void destroy_camera_surface(camera_surface& surface);
 bool test_initialize();
 void test_shutdown();
 id::id_type create_render_item(id::id_type entity_id);
@@ -76,9 +77,9 @@ LRESULT win_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	{
 		bool all_closed{ true };
 		for (u32 i{ 0 }; i < _countof(_surfaces); ++i) {
-			if (_surfaces[i].window.is_valid()) {
-				if (_surfaces[i].window.is_closed()) {
-					destroy_render_surface(_surfaces[i]);
+			if (_surfaces[i].surface.window.is_valid()) {
+				if (_surfaces[i].surface.window.is_closed()) {
+					destroy_camera_surface(_surfaces[i]);
 				}
 				else {
 					all_closed = false;
@@ -112,7 +113,7 @@ LRESULT win_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	if ((resized && GetAsyncKeyState(VK_LBUTTON) >= 0) || toggle_fullscreen) {
 		platform::window win{ platform::window_id{(id::id_type)GetWindowLongPtr(hwnd, GWLP_USERDATA)} };
 		for (u32 i{ 0 }; i < _countof(_surfaces); ++i) {
-			if (win.get_id() == _surfaces[i].window.get_id()) {
+			if (win.get_id() == _surfaces[i].surface.window.get_id()) {
 				if (toggle_fullscreen) {
 					win.set_fullscreen(!win.is_fullscreen());
 					// The default window procedure will play a system notification sound when pressing the Alt+Enter keyboard combination if WM_SYSCHAR is
@@ -120,7 +121,8 @@ LRESULT win_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 					return 0;
 				}
 				else {
-					_surfaces[i].surface.resize(win.width(), win.height());
+					_surfaces[i].surface.surface.resize(win.width(), win.height());
+					_surfaces[i].camera.aspect_ratio((f32)win.width() / win.height());
 					resized = false;
 				}
 				break;
@@ -131,13 +133,18 @@ LRESULT win_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-game_entity::entity create_one_game_entity() {
+game_entity::entity create_one_game_entity(bool is_camera) {
 	transform::init_info transform_info{};
-	math::v3a rot{ 0, 3.14f, 0 };
+	math::v3a rot{ 0, is_camera ? 3.14f : 0.f, 0 };
 	DirectX::XMVECTOR quat{ DirectX::XMQuaternionRotationRollPitchYawFromVector(DirectX::XMLoadFloat3A(&rot)) };
 	math::v4a rot_quat;
 	DirectX::XMStoreFloat4A(&rot_quat, quat);
 	memcpy(&transform_info.rotation[0], &rot_quat.x, sizeof(transform_info.rotation));
+
+	if (is_camera) {
+		transform_info.position[1] = 1.f;
+		transform_info.position[2] = 3.f;
+	}
 
 	game_entity::entity_info entity_info{};
 	entity_info.transform = &transform_info;
@@ -163,17 +170,22 @@ bool read_file(std::filesystem::path path, std::unique_ptr<u8[]>& data, u64& siz
 	return true;
 }
 
-void create_render_surface(graphics::renderer_surface& surface, platform::window_init_info info) {
-	surface.window = platform::create_window(&info);
-	surface.surface = graphics::create_surface(surface.window);
+void create_camera_surface(camera_surface& surface, platform::window_init_info info) {
+	surface.surface.window = platform::create_window(&info);
+	surface.surface.surface = graphics::create_surface(surface.surface.window);
+	surface.entity = create_one_game_entity(true);
+	surface.camera = graphics::create_camera(graphics::perspective_camera_init_info{ surface.entity.get_id() });
+	surface.camera.aspect_ratio((f32)surface.surface.window.width() / surface.surface.window.height());
 }
 
-void destroy_render_surface(graphics::renderer_surface& surface) {
-	graphics::renderer_surface temp{ surface };
+void destroy_camera_surface(camera_surface& surface) {
+	camera_surface temp{ surface };
 	surface = {};
 
-	if (temp.surface.is_valid()) graphics::remove_surface(temp.surface.get_id());
-	if (temp.window.is_valid()) platform::remove_window(temp.window.get_id());
+	if (temp.surface.surface.is_valid()) graphics::remove_surface(temp.surface.surface.get_id());
+	if (temp.surface.window.is_valid()) platform::remove_window(temp.surface.window.get_id());
+	if (temp.camera.is_valid()) graphics::remove_camera(temp.camera.get_id());
+	if (temp.entity.is_valid()) game_entity::remove(temp.entity.get_id());
 }
 
 bool test_initialize() {
@@ -193,7 +205,7 @@ bool test_initialize() {
 	static_assert(_countof(info) == _countof(_surfaces));
 
 	for (u32 i{ 0 }; i < _countof(_surfaces); ++i) {
-		create_render_surface(_surfaces[i], info[i]);
+		create_camera_surface(_surfaces[i], info[i]);
 	}
 
 	// load test model
@@ -206,11 +218,7 @@ bool test_initialize() {
 
 	init_test_workers(buffer_test_worker);
 
-	camera.entity = create_one_game_entity();
-	camera.camera = graphics::create_camera(graphics::perspective_camera_init_info(camera.entity.get_id()));
-	assert(camera.camera.is_valid());
-
-	item_id = create_render_item(create_one_game_entity().get_id());
+	item_id = create_render_item(create_one_game_entity(false).get_id());
 
 	is_restarting = false;
 	return true;
@@ -218,10 +226,6 @@ bool test_initialize() {
 
 void test_shutdown() {
 	destroy_render_item(item_id);
-
-	if (camera.camera.is_valid()) graphics::remove_camera(camera.camera.get_id());
-	if (camera.entity.is_valid()) game_entity::remove(camera.entity.get_id());
-
 	joint_test_workers();
 
 	if (id::is_valid(model_id)) {
@@ -229,8 +233,9 @@ void test_shutdown() {
 	}
 
 	for (u32 i{ 0 }; i < _countof(_surfaces); ++i) {
-		destroy_render_surface(_surfaces[i]);
+		destroy_camera_surface(_surfaces[i]);
 	}
+
 	graphics::shutdown();
 }
 
@@ -242,8 +247,9 @@ void engine_test::run() {
 	timer.begin();
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	for (u32 i{ 0 }; i < _countof(_surfaces); ++i) {
-		if (_surfaces[i].surface.is_valid()) {
-			_surfaces[i].surface.render();
+		if (_surfaces[i].surface.surface.is_valid()) {
+			f32 threshold{ 10 };
+			_surfaces[i].surface.surface.render({ &item_id, &threshold, 1, _surfaces[i].camera.get_id() });
 		}
 	}
 	timer.end();

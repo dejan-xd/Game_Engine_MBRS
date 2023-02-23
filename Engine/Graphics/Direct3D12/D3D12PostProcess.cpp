@@ -66,7 +66,7 @@ namespace primal::graphics::d3d12::fx {
 		core::release(fx_pso);
 	}
 
-	void post_process(id3d12_graphics_command_list* cmd_list, const d3d12_frame_info& d3d12_info, D3D12_CPU_DESCRIPTOR_HANDLE target_rtv) {
+	void post_process(id3d12_graphics_command_list* cmd_list, [[maybe_unused]] const d3d12_frame_info& d3d12_info, D3D12_CPU_DESCRIPTOR_HANDLE target_rtv) {
 		cmd_list->SetGraphicsRootSignature(fx_root_sig);
 		cmd_list->SetPipelineState(fx_pso);
 

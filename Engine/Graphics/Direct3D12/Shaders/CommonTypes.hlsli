@@ -1,6 +1,6 @@
 // Common Types
 
-#if !defined(PRIMAL_COMMONHLSLI) && !defined(__cplusplus)
+#if !defined(PRIMAL_COMMON_HLSLI) && !defined(__cplusplus)
 #error Do not include this header directly in shader files. Only include this file via Common.hlsli.
 #endif
 
@@ -23,9 +23,9 @@ struct GlobalShaderData {
 struct PerObjectData {
 	float4x4 World;
 	float4x4 InvWorld;
-	float4x4 WorldViewprojection;
+	float4x4 WorldViewProjection;
 };
 
 #ifdef __cplusplus
-static_assert((sizeof(PreObjectData) % 16) == 0, "Make sure PerObjectData is formatted in 16-byte chunks without any implicit padding.");
+static_assert((sizeof(PerObjectData) % 16) == 0, "Make sure PerObjectData is formatted in 16-byte chunks without any implicit padding.");
 #endif
