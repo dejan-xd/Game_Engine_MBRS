@@ -31,7 +31,7 @@ namespace primal::graphics {
 		surface_id _id{ id::invalid_id };
 	};
 
-	struct renderer_surface {
+	struct render_surface {
 		platform::window window{};
 		primal::graphics::surface surface{};
 	};

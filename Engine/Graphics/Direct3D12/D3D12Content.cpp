@@ -210,7 +210,7 @@ namespace primal::graphics::d3d12::content {
 			{
 				using params = gpass::opaque_root_parameter;
 				d3dx::d3d12_root_parameter parameters[params::count]{};
-				parameters[params::per_frame_data].as_cbv(D3D12_SHADER_VISIBILITY_ALL, 0);
+				parameters[params::global_shader_data].as_cbv(D3D12_SHADER_VISIBILITY_ALL, 0);
 
 				D3D12_SHADER_VISIBILITY buffer_visibility{};
 				D3D12_SHADER_VISIBILITY data_visibility{};
@@ -272,7 +272,7 @@ namespace primal::graphics::d3d12::content {
 
 		}
 
-		pso_id create_pso(id::id_type material_id, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, u32 elements_type) {
+		pso_id create_pso(id::id_type material_id, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, [[maybe_unused]] u32 elements_type) {
 			std::lock_guard lock{ material_mutex };
 			const d3d12_material_stream material{ materials[material_id].get() };
 
@@ -449,7 +449,7 @@ namespace primal::graphics::d3d12::content {
 
 	namespace texture {
 
-		void get_descriptor_indices(const id::id_type* const texture_ids, u32 id_count, u32* const indices) {
+		void get_descriptor_indices([[maybe_unused]] const id::id_type* const texture_ids, u32 id_count, u32* const indices) {
 			assert(texture_ids && id_count && indices);
 			std::lock_guard lock{ texture_mutex };
 			for (u32 i{ 0 }; i < id_count; ++i) {
@@ -603,7 +603,7 @@ namespace primal::graphics::d3d12::content {
 
 		void get_items(const id::id_type* const d3d12_render_item_ids, u32 id_count, const items_cache& cache) {
 			assert(d3d12_render_item_ids && id_count);
-			assert(cache.entity_ids && cache.submesh_gpu_ids && cache.material_ids && cache.psos && cache.depth_psos);
+			assert(cache.entity_ids && cache.submesh_gpu_ids && cache.material_ids && cache.gpass_psos && cache.depth_psos);
 
 			std::lock_guard lock{ render_item_mutex };
 
@@ -612,7 +612,7 @@ namespace primal::graphics::d3d12::content {
 				cache.entity_ids[i] = item.entity_id;
 				cache.submesh_gpu_ids[i] = item.submesh_gpu_id;
 				cache.material_ids[i] = item.material_id;
-				cache.psos[i] = pipeline_states[item.pso_id];
+				cache.gpass_psos[i] = pipeline_states[item.pso_id];
 				cache.depth_psos[i] = pipeline_states[item.depth_pso_id];
 			}
 		}
