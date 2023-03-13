@@ -44,6 +44,32 @@ namespace primal::transform {
 			return orientation;
 		}
 
+		void set_rotation(transform_id id, const math::v4& rotation_quaternion) {
+			const u32 index{ id::index(id) };
+			rotations[index] = rotation_quaternion;
+			orientations[index] = calculate_orientation(rotation_quaternion);
+			has_transform[index] = 0;
+			changes_from_previous_frame[index] |= component_flags::rotation;
+		}
+
+		void set_orientation(transform_id, const math::v3&) {
+
+		}
+
+		void set_position(transform_id id, const math::v3& position) {
+			const u32 index{ id::index(id) };
+			positions[index] = position;
+			has_transform[index] = 0;
+			changes_from_previous_frame[index] |= component_flags::position;
+		}
+
+		void set_scale(transform_id id, const math::v3& scale) {
+			const u32 index{ id::index(id) };
+			scales[index] = scale;
+			has_transform[index] = 0;
+			changes_from_previous_frame[index] |= component_flags::scale;
+		}
+
 	} // anonymous namespace
 
 	component create(init_info info, game_entity::entity entity) {
@@ -57,6 +83,7 @@ namespace primal::transform {
 			positions[entity_index] = math::v3{ info.position };
 			scales[entity_index] = math::v3{ info.scale };
 			has_transform[entity_index] = 0;
+			changes_from_previous_frame[entity_index] = (u8)component_flags::all;
 		}
 		else {
 			assert(positions.size() == entity_index);
@@ -67,6 +94,7 @@ namespace primal::transform {
 			positions.emplace_back(info.position);
 			scales.emplace_back(info.scale);
 			has_transform.emplace_back((u8)0);
+			changes_from_previous_frame.emplace_back((u8)component_flags::all);
 		}
 
 		// NOTE: each entity has a transform component. Therefor, id's for transform components are exactly the same as entity ids.
@@ -87,6 +115,45 @@ namespace primal::transform {
 
 		world = to_world[entity_index];
 		inverse_world = inv_world[entity_index];
+	}
+
+	void get_updated_components_flags(const game_entity::entity_id* const ids, u32 count, u8* const flags) {
+		assert(ids && count && flags);
+		read_write_flag = 1;
+
+		for (u32 i{ 0 }; i < count; ++i) {
+			assert(game_entity::entity{ ids[i] }.is_valid());
+			flags[i] = changes_from_previous_frame[id::index(ids[i])];
+		}
+	}
+
+	void update(const component_cache* const cache, u32 count) {
+		assert(cache && count);
+
+		// NOTE: clearing "changes_from_previous_frame" happens once every frame when there will be no reads and the caches are about to be applied by
+		//		 calling this function (i.e. the rest of the current frame will only have writes).
+		if (read_write_flag) {
+			memset(changes_from_previous_frame.data(), 0, changes_from_previous_frame.size());
+			read_write_flag = 0;
+		}
+
+		for (u32 i{ 0 }; i < count; ++i) {
+			const component_cache& c{ cache[i] };
+			assert(component{ c.id }.is_valid());
+
+			if (c.flags & component_flags::rotation) {
+				set_rotation(c.id, c.rotation);
+			}
+			if (c.flags & component_flags::orientation) {
+				set_orientation(c.id, c.orientation);
+			}
+			if (c.flags & component_flags::position) {
+				set_position(c.id, c.position);
+			}
+			if (c.flags & component_flags::scale) {
+				set_scale(c.id, c.scale);
+			}
+		}
 	}
 
 	math::v4 component::rotation() const {

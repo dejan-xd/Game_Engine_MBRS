@@ -141,10 +141,10 @@ namespace primal::graphics::d3d12::camera {
 			*entity_id = camera.entity_id();
 		}
 
+		constexpr void dummy_set(d3d12_camera&, const void* const, u32) {}
+
 		using set_function = void(*)(d3d12_camera&, const void* const, u32);
 		using get_function = void(*)(d3d12_camera&, void* const, u32);
-
-		constexpr void dummy_set(d3d12_camera&, const void* const, u32) {}
 
 		constexpr set_function set_functions[]
 		{
@@ -205,9 +205,10 @@ namespace primal::graphics::d3d12::camera {
 		_view = XMMatrixLookToRH(_position, _direction, _up);
 
 		if (_is_dirty) {
+			// NOTE: _near_z and _far_z are swapped because we use inverse depth in d3d12 renderer
 			_projection = (_projection_type == graphics::camera::perspective)
-				? XMMatrixPerspectiveFovRH(_field_of_view * XM_PI, _aspect_ratio, _near_z, _far_z)
-				: XMMatrixOrthographicRH(_view_width, _view_height, _near_z, _far_z);
+				? XMMatrixPerspectiveFovRH(_field_of_view * XM_PI, _aspect_ratio, _far_z, _near_z)
+				: XMMatrixOrthographicRH(_view_width, _view_height, _far_z, _near_z);
 			_inverse_projection = XMMatrixInverse(nullptr, _projection);
 			_is_dirty = false;
 		}
