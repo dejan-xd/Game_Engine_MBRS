@@ -64,7 +64,7 @@ VertexOut TestShaderVS(in uint VertexIdx: SV_VertexID) {
 
 	VertexElement element = Elements[VertexIdx];
 	float2 nXY = element.Normal * InvIntervals - 1.f;
-	float signs = (element.ColorTSign >> 24) & 0xff;
+	uint signs = (element.ColorTSign >> 24) & 0xff;
 	float nSign = float(signs & 0x02) - 1;
 	float3 normal = float3(nXY.x, nXY.y, sqrt(saturate(1.f - dot(nXY, nXY))) * nSign);
 
@@ -78,7 +78,7 @@ VertexOut TestShaderVS(in uint VertexIdx: SV_VertexID) {
 
 	VertexElement element = Elements[VertexIdx];
 	float2 nXY = element.Normal * InvIntervals - 1.f;
-	float signs = (element.ColorTSign >> 24) & 0xff;
+	uint signs = (element.ColorTSign >> 24) & 0xff;
 	float nSign = float(signs & 0x02) - 1;
 	float3 normal = float3(nXY.x, nXY.y, sqrt(saturate(1.f - dot(nXY, nXY))) * nSign);
 
