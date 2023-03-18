@@ -283,6 +283,14 @@ namespace primal::graphics::d3d12::content {
 			}
 		}
 
+#pragma intrinsic(_BitScanForward)
+		shader_type::type get_shader_type(u32 flag) {
+			assert(flag);
+			unsigned long index;
+			_BitScanForward(&index, flag);
+			return (shader_type::type)index;
+		}
+
 		pso_id create_pso(id::id_type material_id, D3D12_PRIMITIVE_TOPOLOGY primitive_topology, [[maybe_unused]] u32 elements_type) {
 			constexpr u64 aligned_stream_size{ math::align_size_up<sizeof(u64)>(sizeof(d3dx::d3d12_pipeline_state_subobject_stream)) };
 			u8* const stream_ptr{ (u8* const)alloca(aligned_stream_size) };
@@ -312,7 +320,10 @@ namespace primal::graphics::d3d12::content {
 				u32 shader_index{ 0 };
 				for (u32 i{ 0 }; i < shader_type::count; ++i) {
 					if (flags & (1 << i)) {
-						primal::content::compiled_shader_ptr shader{ primal::content::get_shader(material.shader_ids()[shader_index]) };
+						// NOTE: each type of shader may have keys that are generated from different properties of the submesh or material.
+						//		 At the moment, we only have different kinds of vertex shaders depending on elements_type
+						const u32 key{ get_shader_type(flags & (1 << i)) == shader_type::vertex ? elements_type : u32_invalid_id };
+						primal::content::compiled_shader_ptr shader{ primal::content::get_shader(material.shader_ids()[shader_index], key) };
 						assert(shader);
 						shaders[i].pShaderBytecode = shader->byte_code();
 						shaders[i].BytecodeLength = shader->byte_code_size();

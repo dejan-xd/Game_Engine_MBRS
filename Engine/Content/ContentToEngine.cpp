@@ -59,12 +59,21 @@ namespace primal::content {
 			u32 _lod_count;
 		};
 
+		struct noexcept_map {
+			std::unordered_map<u32, std::unique_ptr<u8[]>> map;
+			noexcept_map() = default;
+			noexcept_map(const noexcept_map&) = default;
+			noexcept_map(noexcept_map&&) noexcept = default;
+			noexcept_map& operator=(const noexcept_map&) = default;
+			noexcept_map& operator=(noexcept_map&&) noexcept = default;
+		};
+		
 		// This constant indicates that an element in geometry_hierarchies is not a pointer, but a gpu_id
 		constexpr uintptr_t single_mesh_marker{ (uintptr_t)0x01 };
 		utl::free_list<u8*> geometry_hierarchies;
 		std::mutex geometry_mutex;
 
-		utl::free_list<std::unique_ptr<u8[]>> shaders;
+		utl::free_list<noexcept_map> shader_groups;
 		std::mutex shader_mutex;
 
 		// NOTE: expects the same data as create_geometry_resource()
@@ -286,25 +295,42 @@ namespace primal::content {
 		}
 	}
 
-	id::id_type add_shader(const u8* data) {
-		const compiled_shader_ptr shader_ptr{ (const compiled_shader_ptr)data };
-		const u64 size{ sizeof(u64) + compiled_shader::hash_length + shader_ptr->byte_code_size() };
-		std::unique_ptr<u8[]> shader{ std::make_unique<u8[]>(size) };
-		memcpy(shader.get(), data, size);
+	// NOTE: expect shaders to be an array of pointers to compiled_shaders
+	// NOTE: the editor is responsible for making sure that there are no duplicate shaders
+	id::id_type add_shader_group(const u8* const* shaders, u32 num_shaders, const u32* const keys) {
+		assert(shaders && num_shaders && keys);
+		noexcept_map group;
+		for (u32 i{ 0 }; i < num_shaders; ++i) {
+			assert(shaders[i]);
+			const compiled_shader_ptr shader_ptr{ (const compiled_shader_ptr)shaders[i]};
+			const u64 size{ compiled_shader::buffer_size(shader_ptr->byte_code_size()) };
+			std::unique_ptr<u8[]> shader{ std::make_unique<u8[]>(size) };
+			memcpy(shader.get(), shaders[i], size);
+			group.map[keys[i]] = std::move(shader);
+		}
 		std::lock_guard lock{ shader_mutex };
-		return shaders.add(std::move(shader));
+		return shader_groups.add(std::move(group));
 	}
 
-	void remove_shader(id::id_type id) {
+	void remove_shader_group(id::id_type id) {
 		std::lock_guard lock{ shader_mutex };
 		assert(id::is_valid(id));
-		shaders.remove(id);
+		shader_groups[id].map.clear();
+		shader_groups.remove(id);
 	}
 
-	compiled_shader_ptr get_shader(id::id_type id) {
+	compiled_shader_ptr get_shader(id::id_type id, u32 shader_key) {
 		std::lock_guard lock{ shader_mutex };
 		assert(id::is_valid(id));
-		return (const compiled_shader_ptr)(shaders[id].get());
+
+		for (const auto& [key, value] : shader_groups[id].map) {
+			if (key == shader_key) {
+				return (const compiled_shader_ptr)value.get();
+			}
+		}
+
+		assert(false); // should never occure
+		return nullptr;
 	}
 
 	void get_submesh_gpu_ids(id::id_type geometry_content_id, u32 id_count, id::id_type* const gpu_ids) {
@@ -321,8 +347,8 @@ namespace primal::content {
 				const u32 lod_count{ stream.lod_count() };
 				const lod_offset lod_offset{ stream.lod_offsets()[lod_count - 1] };
 				const u32 gpu_id_count{ (u32)lod_offset.offset + (u32)lod_offset.count };
-			return gpu_id_count == id_count;
-				}());
+				return gpu_id_count == id_count;
+			}());
 
 			memcpy(gpu_ids, stream.gpu_ids(), sizeof(id::id_type) * id_count);
 		}
