@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Graphics/Direct3D12/D3D12CommonHeaders.h"
 
 namespace primal::graphics::d3d12::hlsl {
