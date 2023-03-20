@@ -1,5 +1,4 @@
 #pragma once
-
 #include "CommonHeaders.h"
 #include "MathTypes.h"
 
