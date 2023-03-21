@@ -79,9 +79,7 @@ namespace primal::tools {
 			const u32 row_length{ horizontal_count + 1 }; // number of vertices in a row
 			for (u32 j{ 0 }; j < vertical_count; ++j) {
 
-				u32 k{ 0 };	// counter to skip first and last column
-
-				for (u32 i{ k }; i < horizontal_count; ++i) {
+				for (u32 i{ 0 }; i < horizontal_count; ++i) {
 					const u32 index[4]{
 						i + j * row_length,
 						i + (j + 1) * row_length,
@@ -97,7 +95,6 @@ namespace primal::tools {
 					m.raw_indices.emplace_back(index[flip_winding ? 3 : 1]);
 					m.raw_indices.emplace_back(index[flip_winding ? 1 : 3]);
 				}
-				++k;
 			}
 
 			// 3 indices per triangle, 2 triangles per quad, number of quads is horizontal multiplied by vertical count

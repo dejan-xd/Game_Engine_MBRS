@@ -59,6 +59,7 @@ namespace primal::content {
 			u32 _lod_count;
 		};
 
+		// NOTE: This is needed to maintain compatibility with STL vector 
 		struct noexcept_map {
 			std::unordered_map<u32, std::unique_ptr<u8[]>> map;
 			noexcept_map() = default;
@@ -128,12 +129,12 @@ namespace primal::content {
 
 			assert([&]() {
 				f32 previous_threshold{ stream.thresholds()[0] };
-			for (u32 i{ 1 }; i < lod_count; ++i) {
-				if (stream.thresholds()[i] <= previous_threshold) return false;
-				previous_threshold = stream.thresholds()[i];
-			}
-			return true;
-				}());
+				for (u32 i{ 1 }; i < lod_count; ++i) {
+					if (stream.thresholds()[i] <= previous_threshold) return false;
+					previous_threshold = stream.thresholds()[i];
+				}
+				return true;
+			}());
 
 			static_assert(alignof(void*) > 2, "We need the least significant bit for the single mesh marker.");
 			std::lock_guard lock{ geometry_mutex };
@@ -303,7 +304,7 @@ namespace primal::content {
 		for (u32 i{ 0 }; i < num_shaders; ++i) {
 			assert(shaders[i]);
 			const compiled_shader_ptr shader_ptr{ (const compiled_shader_ptr)shaders[i]};
-			const u64 size{ compiled_shader::buffer_size(shader_ptr->byte_code_size()) };
+			const u64 size{ shader_ptr->buffer_size()};
 			std::unique_ptr<u8[]> shader{ std::make_unique<u8[]>(size) };
 			memcpy(shader.get(), shaders[i], size);
 			group.map[keys[i]] = std::move(shader);
