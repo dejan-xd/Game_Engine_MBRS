@@ -375,7 +375,7 @@ namespace Editor.Content
             }
             else
             {
-                meshName = $"mesh_{ContentHelper.GetRandomString() }";
+                meshName = $"mesh_{ContentHelper.GetRandomString()}";
             }
 
             Mesh mesh = new() { Name = meshName };
@@ -626,7 +626,7 @@ namespace Editor.Content
             Debug.Assert(data?.Length > 0);
 
             // for testing, remove later!
-            using (FileStream fs = new(@"..\..\EngineTest\model.model", FileMode.Create))
+            using (FileStream fs = new(@"..\..\x64\model.model", FileMode.Create))
             {
                 fs.Write(data, 0, data.Length);
             }
