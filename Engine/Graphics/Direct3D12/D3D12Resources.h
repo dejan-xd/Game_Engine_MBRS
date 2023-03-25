@@ -17,7 +17,7 @@ namespace primal::graphics::d3d12 {
 	private:
 		friend class descriptor_heap;
 		descriptor_heap* container{ nullptr };
-#endif // _DEBUG
+#endif // !_DEBUG
 
 	};
 

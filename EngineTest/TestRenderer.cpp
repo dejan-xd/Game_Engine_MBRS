@@ -76,7 +76,8 @@ LRESULT win_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
 	bool toggle_fullscreen{ false };
 
-	switch (msg) {
+	switch (msg)
+	{
 	case WM_DESTROY:
 	{
 		bool all_closed{ true };
@@ -285,4 +286,4 @@ void engine_test::shutdown() {
 	test_shutdown();
 }
 
-#endif // TEST_RENDERER
+#endif // !TEST_RENDERER

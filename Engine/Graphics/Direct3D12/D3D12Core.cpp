@@ -311,7 +311,7 @@ namespace primal::graphics::d3d12::core {
 
 			dxgi_factory_flags |= DXGI_CREATE_FACTORY_DEBUG;
 		}
-#endif // _DEBUG
+#endif // !_DEBUG
 
 		HRESULT hr{ S_OK };
 		DXCall(hr = CreateDXGIFactory2(dxgi_factory_flags, IID_PPV_ARGS(&dxgi_factory)));
@@ -339,7 +339,7 @@ namespace primal::graphics::d3d12::core {
 			info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
 			info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
 		}
-#endif // _DEBUG
+#endif // !_DEBUG
 
 		bool result{ true };
 		result &= rtv_desc_heap.initialize(512, false);
@@ -425,7 +425,7 @@ namespace primal::graphics::d3d12::core {
 			release(main_device);
 			DXCall(debug_device->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL));
 		}
-#endif // _DEBUG
+#endif // !_DEBUG
 
 		release(main_device);
 	}
