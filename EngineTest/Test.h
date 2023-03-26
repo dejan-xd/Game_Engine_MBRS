@@ -25,7 +25,7 @@ public:
 	using time_stamp = std::chrono::steady_clock::time_point;
 
 	// average frame time per seconds
-	constexpr float dt_avg() const { return _dt_avg * 1e-6f; }
+	constexpr f32 dt_avg() const { return _dt_avg * 1e-6f; }
 
 	void begin() {
 		_start = clock::now();
@@ -33,7 +33,7 @@ public:
 
 	void end() {
 		auto dt = clock::now() - _start;
-		_us_avg += ((float)std::chrono::duration_cast<std::chrono::microseconds>(dt).count() - _us_avg) / (float)_counter;
+		_us_avg += ((f32)std::chrono::duration_cast<std::chrono::microseconds>(dt).count() - _us_avg) / (f32)_counter;
 		++_counter;
 		_dt_avg = _us_avg;
 
@@ -50,8 +50,8 @@ public:
 	}
 
 private:
-	float _dt_avg{ 16.7f };
-	float _us_avg{ 0.f };
+	f32 _dt_avg{ 16.7f };
+	f32 _us_avg{ 0.f };
 	u32 _counter{ 1 };
 	time_stamp _start;
 	time_stamp _seconds{ clock::now() };

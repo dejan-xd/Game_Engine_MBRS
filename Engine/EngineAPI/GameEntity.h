@@ -33,7 +33,7 @@ namespace primal {
 		public:
 			virtual ~entity_script() = default;
 			virtual void begin_play() {}
-			virtual void update(float) {}
+			virtual void update(f32) {}
 
 		protected:
 			constexpr explicit entity_script(game_entity::entity entity)

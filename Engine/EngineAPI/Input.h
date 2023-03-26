@@ -33,112 +33,112 @@ namespace primal::input {
 
 	struct input_code {
 		enum code : u32 {
-            mouse_position,
-            mouse_position_x,
-            mouse_position_y,
-            mouse_left,
-            mouse_right,
-            mouse_middle,
-            mouse_wheel,
+			mouse_position,
+			mouse_position_x,
+			mouse_position_y,
+			mouse_left,
+			mouse_right,
+			mouse_middle,
+			mouse_wheel,
 
-            key_backspace,
-            key_tab,
-            key_return,
-            key_shift,
-            key_left_shift,
-            key_right_shift,
-            key_control,
-            key_left_control,
-            key_right_control,
-            key_alt,
-            key_left_alt,
-            key_right_alt,
-            key_pause,
-            key_capslock,
-            key_escape,
-            key_space,
-            key_page_up,
-            key_page_down,
-            key_home,
-            key_end,
-            key_left,
-            key_up,
-            key_right,
-            key_down,
-            key_print_screen,
-            key_insert,
-            key_delete,
+			key_backspace,
+			key_tab,
+			key_return,
+			key_shift,
+			key_left_shift,
+			key_right_shift,
+			key_control,
+			key_left_control,
+			key_right_control,
+			key_alt,
+			key_left_alt,
+			key_right_alt,
+			key_pause,
+			key_capslock,
+			key_escape,
+			key_space,
+			key_page_up,
+			key_page_down,
+			key_home,
+			key_end,
+			key_left,
+			key_up,
+			key_right,
+			key_down,
+			key_print_screen,
+			key_insert,
+			key_delete,
 
-            key_0,
-            key_1,
-            key_2,
-            key_3,
-            key_4,
-            key_5,
-            key_6,
-            key_7,
-            key_8,
-            key_9,
+			key_0,
+			key_1,
+			key_2,
+			key_3,
+			key_4,
+			key_5,
+			key_6,
+			key_7,
+			key_8,
+			key_9,
 
-            key_a,
-            key_b,
-            key_c,
-            key_d,
-            key_e,
-            key_f,
-            key_g,
-            key_h,
-            key_i,
-            key_j,
-            key_k,
-            key_l,
-            key_m,
-            key_n,
-            key_o,
-            key_p,
-            key_q,
-            key_r,
-            key_s,
-            key_t,
-            key_u,
-            key_v,
-            key_w,
-            key_x,
-            key_y,
-            key_z,
+			key_a,
+			key_b,
+			key_c,
+			key_d,
+			key_e,
+			key_f,
+			key_g,
+			key_h,
+			key_i,
+			key_j,
+			key_k,
+			key_l,
+			key_m,
+			key_n,
+			key_o,
+			key_p,
+			key_q,
+			key_r,
+			key_s,
+			key_t,
+			key_u,
+			key_v,
+			key_w,
+			key_x,
+			key_y,
+			key_z,
 
-            key_numpad_0,
-            key_numpad_1,
-            key_numpad_2,
-            key_numpad_3,
-            key_numpad_4,
-            key_numpad_5,
-            key_numpad_6,
-            key_numpad_7,
-            key_numpad_8,
-            key_numpad_9,
+			key_numpad_0,
+			key_numpad_1,
+			key_numpad_2,
+			key_numpad_3,
+			key_numpad_4,
+			key_numpad_5,
+			key_numpad_6,
+			key_numpad_7,
+			key_numpad_8,
+			key_numpad_9,
 
-            key_multiply,
-            key_add,
-            key_subtract,
-            key_decimal,
-            key_divide,
+			key_multiply,
+			key_add,
+			key_subtract,
+			key_decimal,
+			key_divide,
 
-            key_f1,
-            key_f2,
-            key_f3,
-            key_f4,
-            key_f5,
-            key_f6,
-            key_f7,
-            key_f8,
-            key_f9,
-            key_f10,
-            key_f11,
-            key_f12,
+			key_f1,
+			key_f2,
+			key_f3,
+			key_f4,
+			key_f5,
+			key_f6,
+			key_f7,
+			key_f8,
+			key_f9,
+			key_f10,
+			key_f11,
+			key_f12,
 
-            key_numlock,
-            key_scrollock,
+			key_numlock,
+			key_scrollock,
 		};
 	};
 
@@ -155,7 +155,7 @@ namespace primal::input {
 		u64 binding{ 0 };
 		type source_type{};
 		u32 code{ 0 };
-		float multiplier{ 0 };
+		f32 multiplier{ 0 };
 		bool is_discrete{ true };
 		axis::type source_axis{};
 		axis::type axis{};
@@ -178,5 +178,38 @@ namespace primal::input {
 		};
 
 	} // namespace detail
+
+	template<typename T> class input_system final : public detail::input_system_base {
+
+	public:
+		using input_callback_t = void(T::*)(input_source::type, input_code::code, const input_value&);
+
+		void add_handler(input_source::type type, T* instance, input_callback_t callback) {
+			assert(instance && callback && type < input_source::count);
+			auto& collection = _input_callbacks[type];
+			for (const auto& func : collection) {
+				// f handler was already added then don't add it again
+				if (func.instance == instance && func.callback == callback) return;
+			}
+
+			collection.emplace_back(input_callback{ instance, callback });
+		}
+
+		void on_event(input_source::type type, input_code::code code, const input_value& value) override {
+			assert(type < input_source::count);
+			for (const auto& item : _input_callbacks[type]) {
+				(item.instance->*item.callback)(type, code, value);
+			}
+		}
+
+	private:
+		struct input_callback {
+			T* instance;
+			input_callback_t callback;
+		};
+
+		utl::vector<input_callback> _input_callbacks[input_source::count];
+
+	};
 
 }
