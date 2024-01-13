@@ -139,6 +139,17 @@ namespace primal::input {
 
 			key_numlock,
 			key_scrollock,
+			key_colon,
+			key_plus,
+			key_minus,
+			key_period,
+			key_comma,
+			key_question,
+			key_bracket_open,
+			key_bracket_close,
+			key_pipe,
+			key_quote,
+			key_tilde,
 		};
 	};
 
@@ -146,7 +157,7 @@ namespace primal::input {
 		enum type : u32 {
 			keyboard,
 			mouse,
-			controler,
+			controller,
 			raw,
 
 			count
