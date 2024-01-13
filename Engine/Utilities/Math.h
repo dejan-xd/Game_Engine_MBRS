@@ -4,6 +4,12 @@
 
 namespace primal::math {
 
+	constexpr bool is_equal(f32 a, f32 b, f32 eps = epsilon) {
+		f32 diff{ a - b };
+		if (diff < 0.f) diff = -diff;
+		return diff < eps;
+	}
+
 	template<typename T> [[nodiscard]] constexpr T clamp(T value, T min, T max) {
 		return (value < min) ? min : (value > max) ? max : value;
 	}

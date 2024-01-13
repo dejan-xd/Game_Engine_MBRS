@@ -56,4 +56,4 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 }
 #endif // !USE_WITH_EDITOR
 
-#endif // _WIN64
+#endif // !_WIN64

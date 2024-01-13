@@ -8,7 +8,8 @@ using namespace primal;
 platform::window _windows[4];
 
 LRESULT win_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-	switch (msg) {
+	switch (msg)
+	{
 	case WM_DESTROY:
 	{
 		bool all_closed{ true };

@@ -1,5 +1,6 @@
 #include "Platform.h"
 #include "PlatformTypes.h"
+#include "Input/InputWin32.h"
 
 namespace primal::platform {
 
@@ -33,7 +34,8 @@ namespace primal::platform {
 
 		LRESULT CALLBACK internal_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
-			switch (msg) {
+			switch (msg)
+			{
 			case WM_NCCREATE:
 			{
 				// Put the window id in the user data field of window's data buffer
@@ -54,7 +56,9 @@ namespace primal::platform {
 				break;
 			}
 
-			if (resized && GetAsyncKeyState(VK_LBUTTON) >= 0) {
+			input::process_input_message(hwnd, msg, wparam, lparam);
+
+			if (resized && GetKeyState(VK_LBUTTON) >= 0) {
 				window_info& info{ get_from_handle(hwnd) };
 				assert(info.hwnd);
 				GetClientRect(info.hwnd, info.is_fullscreen ? &info.fullscreen_area : &info.client_area);
@@ -224,7 +228,7 @@ namespace primal::platform {
 
 #else
 #error "must implement at least one platform"
-#endif // _WIN64
+#endif // !_WIN64
 
 	// PLATFORM INDEPENDENT METHODS
 	void window::set_fullscreen(bool is_fullscreen) const {

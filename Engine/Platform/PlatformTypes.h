@@ -24,4 +24,4 @@ namespace primal::platform {
 	};
 }
 
-#endif // _WIN64
+#endif // !_WIN64

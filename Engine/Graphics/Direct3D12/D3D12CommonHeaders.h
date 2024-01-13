@@ -43,7 +43,7 @@ if(FAILED(x)){										\
 #ifndef DXCall
 #define DXCall(x) x
 #endif // !DXCall
-#endif // _DEBUG
+#endif // !_DEBUG
 
 #ifdef _DEBUG
 // Sets the name of the COM object and outputs a debug string into Visual Studio's output panel.
@@ -61,7 +61,7 @@ if(FAILED(x)){										\
 #else
 #define NAME_D3D12_OBJECT(x, name)
 #define NAME_D3D12_OBJECT_INDEXED(x, n, name)
-#endif // _DEBUG
+#endif // !_DEBUG
 
 #include "D3D12Helpers.h"
 #include "D3D12Resources.h"
