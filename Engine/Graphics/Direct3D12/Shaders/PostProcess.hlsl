@@ -1,15 +1,17 @@
 // Post Process
 
-struct ShaderConstants {
-	uint GPassMainBufferIndex;
+struct ShaderConstants
+{
+    uint GPassMainBufferIndex;
 };
 
 ConstantBuffer<ShaderConstants> ShaderParams : register(b1);
 
-float4 PostProcessPS(in noperspective float4 Position : SV_Position, in noperspective float2 UV : TEXCOORD) : SV_Target0{
+float4 PostProcessPS(in noperspective float4 Position : SV_Position, in noperspective float2 UV : TEXCOORD) : SV_Target0
+{
 
-	Texture2D gpassMain = ResourceDescriptorHeap[ShaderParams.GPassMainBufferIndex];
-	float4 color = float4(gpassMain[Position.xy].xyz, 1.f);
-	return color;
+    Texture2D gpassMain = ResourceDescriptorHeap[ShaderParams.GPassMainBufferIndex];
+    float4 color = float4(gpassMain[Position.xy].xyz, 1.f);
+    return color;
 
 }
