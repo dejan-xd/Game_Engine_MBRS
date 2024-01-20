@@ -73,6 +73,10 @@ namespace primal::graphics {
 			is_enabled,
 			intensity,
 			color,
+			attenuation,
+			range,
+			umbra,
+			penumbra,
 			type,
 			entity_id,
 
@@ -184,7 +188,7 @@ namespace primal::graphics {
 	struct material_init_info {
 		material_type::type type;
 		u32 texture_count; // NOTE: textures are optional, so, texture_count may be 0
-		id::id_type         shader_ids[shader_type::count]{ id::invalid_id, id::invalid_id, id::invalid_id, id::invalid_id, 
+		id::id_type         shader_ids[shader_type::count]{ id::invalid_id, id::invalid_id, id::invalid_id, id::invalid_id,
 															id::invalid_id, id::invalid_id, id::invalid_id, id::invalid_id };
 		id::id_type* texture_ids; // texture_ids may be nullptr
 	};

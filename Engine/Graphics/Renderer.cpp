@@ -97,6 +97,22 @@ namespace primal::graphics {
 		gfx.light.set_parameter(_id, _light_set_key, light_parameter::color, &color, sizeof(color));
 	}
 
+	void light::attenuation(math::v3 attenuation) const {
+		assert(is_valid());
+		gfx.light.set_parameter(_id, _light_set_key, light_parameter::attenuation, &attenuation, sizeof(attenuation));
+	}
+
+	void light::range(f32 range) const {
+		assert(is_valid());
+		gfx.light.set_parameter(_id, _light_set_key, light_parameter::range, &range, sizeof(range));
+	}
+
+	void light::cone_angles(f32 umbra, f32 penumbra) const {
+		assert(is_valid());
+		gfx.light.set_parameter(_id, _light_set_key, light_parameter::umbra, &umbra, sizeof(umbra));
+		gfx.light.set_parameter(_id, _light_set_key, light_parameter::penumbra, &penumbra, sizeof(penumbra));
+	}
+
 	bool light::is_enabled() const {
 		assert(is_valid());
 		bool is_enabled;
@@ -111,21 +127,49 @@ namespace primal::graphics {
 		return intensity;
 	}
 
-	math::v3 light::color() const{
+	math::v3 light::color() const {
 		assert(is_valid());
 		math::v3 color;
 		gfx.light.get_parameter(_id, _light_set_key, light_parameter::color, &color, sizeof(color));
 		return color;
 	}
 
-	light::type light::light_type() const{
+	math::v3 light::attenuation() const {
+		assert(is_valid());
+		math::v3 attenuation;
+		gfx.light.get_parameter(_id, _light_set_key, light_parameter::attenuation, &attenuation, sizeof(attenuation));
+		return attenuation;
+	}
+
+	f32 light::range() const {
+		assert(is_valid());
+		f32 range;
+		gfx.light.get_parameter(_id, _light_set_key, light_parameter::range, &range, sizeof(range));
+		return range;
+	}
+
+	f32 light::umbra() const {
+		assert(is_valid());
+		f32 umbra;
+		gfx.light.get_parameter(_id, _light_set_key, light_parameter::umbra, &umbra, sizeof(umbra));
+		return umbra;
+	}
+
+	f32 light::penumbra() const {
+		assert(is_valid());
+		f32 penumbra;
+		gfx.light.get_parameter(_id, _light_set_key, light_parameter::penumbra, &penumbra, sizeof(penumbra));
+		return penumbra;
+	}
+
+	light::type light::light_type() const {
 		assert(is_valid());
 		type type;
 		gfx.light.get_parameter(_id, _light_set_key, light_parameter::type, &type, sizeof(type));
 		return type;
 	}
 
-	id::id_type light::entity_id() const{
+	id::id_type light::entity_id() const {
 		assert(is_valid());
 		id::id_type id;
 		gfx.light.get_parameter(_id, _light_set_key, light_parameter::entity_id, &id, sizeof(id));
