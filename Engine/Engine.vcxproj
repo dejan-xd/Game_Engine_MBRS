@@ -38,6 +38,7 @@
     <ClInclude Include="Graphics\Direct3D12\D3D12Camera.h" />
     <ClInclude Include="Graphics\Direct3D12\D3D12Content.h" />
     <ClInclude Include="Graphics\Direct3D12\D3D12Light.h" />
+    <ClInclude Include="Graphics\Direct3D12\D3D12LightCulling.h" />
     <ClInclude Include="Graphics\Direct3D12\D3D12Upload.h" />
     <ClInclude Include="Graphics\Direct3D12\D3D12CommonHeaders.h" />
     <ClInclude Include="Graphics\Direct3D12\D3D12Core.h" />
@@ -78,6 +79,7 @@
     <ClCompile Include="Graphics\Direct3D12\D3D12Helpers.cpp" />
     <ClCompile Include="Graphics\Direct3D12\D3D12Interface.cpp" />
     <ClCompile Include="Graphics\Direct3D12\D3D12Light.cpp" />
+    <ClCompile Include="Graphics\Direct3D12\D3D12LightCulling.cpp" />
     <ClCompile Include="Graphics\Direct3D12\D3D12PostProcess.cpp" />
     <ClCompile Include="Graphics\Direct3D12\D3D12Resources.cpp" />
     <ClCompile Include="Graphics\Direct3D12\D3D12Shaders.cpp" />
