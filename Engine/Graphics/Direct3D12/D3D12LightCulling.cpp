@@ -109,7 +109,10 @@ namespace primal::graphics::d3d12::delight {
 			memcpy(buffer, &params, sizeof(hlsl::LightCullingDispatchParameters));
 
 			// Make frustums buffer writable
-			barriers.add(culler.frustums.buffer(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			// TODO: remove pixel_shader_resource flag (it's only there so we can visualize grid frustums).
+			barriers.add(culler.frustums.buffer(),
+				D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 			barriers.apply(cmd_list);
 
 			using param = light_culling_root_parameter;
@@ -122,7 +125,10 @@ namespace primal::graphics::d3d12::delight {
 
 			// Make frustums buffer readable
 			// NOTE: cull_lights() will apply this transition.
-			barriers.add(culler.frustums.buffer(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+			// TODO: remove pixel_shader_resource flag (it's only there so we can visualize grid frustums).
+			barriers.add(culler.frustums.buffer(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+				D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		}
 
 		void _declspec(noinline) resize_and_calculate_grid_frustums(culling_parameters& culler, id3d12_graphics_command_list* const cmd_list,
@@ -167,6 +173,14 @@ namespace primal::graphics::d3d12::delight {
 			!math::is_equal(d3d12_info.camera->field_of_view(), culler.camera_fov)) {
 			resize_and_calculate_grid_frustums(culler, cmd_list, d3d12_info, barriers);
 		}
+
+		// barriers.apply(cmd_list);
+	}
+
+	// TODO: temporary for visualizing light culling. Remove later.
+	D3D12_GPU_VIRTUAL_ADDRESS frustums(id::id_type light_culling_id, u32 frame_index) {
+		assert(frame_index < frame_buffer_count && id::is_valid(light_culling_id));
+		return light_cullers[light_culling_id].cullers[frame_index].frustums.gpu_address();
 	}
 
 }
