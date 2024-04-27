@@ -40,7 +40,9 @@ void CullLightsCS(ComputeShaderInput csIn)
     // DEPTH MIN/MAX SECTION
     GroupMemoryBarrierWithGroupSync();
     
-    const float depth = Texture2D(ResourceDescriptorHeap[ShaderParams.DepthBufferSrvIndex])[csIn.DispatchThreadID.xy].r;
+    // NOTE: Not an error, leave it be!
+    //       It has to do something with the DirectXShaderCompiler most likely.
+    const float depth = Texture2D( ResourceDescriptorHeap[ShaderParams.DepthBufferSrvIndex])[csIn.DispatchThreadID.xy].r; 
     const float depthVS = ClipToView(float4(0.f, 0.f, depth, 1.f), GlobalData.InvProjection).z;
     // Negate depth because of right-handed coorinates (negative z-axis).
     // This make the comparisons easier to understand.
@@ -55,9 +57,57 @@ void CullLightsCS(ComputeShaderInput csIn)
     // LIGHT CUILLING SECTION
     GroupMemoryBarrierWithGroupSync();
     
+    const uint gridIndex = csIn.GroupID.x + (csIn.GroupID.y * ShaderParams.NumThreadGroups.x);
+    const Frustum frustum = Frustums[gridIndex];
+    // Negate view-space min/max again
+    const float minDepthVS = -asfloat(_minDepthVS);
+    const float maxDepthVS = -asfloat(_maxDepthVS);
+
+    for (i = csIn.GroupIndex; i < ShaderParams.NumLights; i += TILE_SIZE * TILE_SIZE)
+    {
+        const LightCullingLightInfo light = Lights[i];
+        const float3 lightPositionVS = mul(GlobalData.View, float4(light.Position, 1.f)).xyz;
+
+        if (light.Type == LIGHT_TYPE_POINT_LIGHT)
+        {
+            const Sphere sphere = { lightPositionVS, light.Range };
+            if (SphereInsideFrustum(sphere, frustum, minDepthVS, maxDepthVS))
+            {
+                InterlockedAdd(_lightCount, 1, index);
+                if (index < MaxLightsPerGroup)
+                    _lightIndexList[index] = i;
+            }
+        }
+        else if (light.Type == LIGHT_TYPE_SPOTLIGHT)
+        {
+            const float3 lightDirectionVS = mul(GlobalData.View, float4(light.Direction, 0.f)).xyz;
+            const Cone cone = { lightPositionVS, light.Range, lightDirectionVS, light.ConeRadius };
+            if (ConeInsideFrustum(cone, frustum, minDepthVS, maxDepthVS))
+            {
+                InterlockedAdd(_lightCount, 1, index);
+                if (index < MaxLightsPerGroup)
+                    _lightIndexList[index] = i;
+            }
+        }
+    }
+    
     // UPDATE LIGHT GRID SECTION
     GroupMemoryBarrierWithGroupSync();
     
+    const uint lightCount = min(_lightCount, MaxLightsPerGroup);
+
+    if (csIn.GroupIndex == 0)
+    {
+        InterlockedAdd(LightIndexCounter[0], lightCount, _lightIndexStartOffset);
+        LightGrid_Opaque[gridIndex] = uint2(_lightIndexStartOffset, lightCount);
+    }
+    
     // UPDATE LIGHT INDEX LIST SECTION
     GroupMemoryBarrierWithGroupSync();
+    
+    for (i = csIn.GroupIndex; i < lightCount; i += TILE_SIZE * TILE_SIZE)
+    {
+        LightIndexList_Opaque[_lightIndexStartOffset + i] = _lightIndexList[i];
+    }
+    
 }
