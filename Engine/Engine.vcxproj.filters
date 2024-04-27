@@ -51,7 +51,7 @@
     <ClCompile Include="Components\Script.cpp" />
     <ClCompile Include="Core\Main.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
-    <ClCompile Include="Platform\Platform.cpp" />
+    <ClCompile Include="Platform\PlatformWin32.cpp" />
     <ClCompile Include="Content\ContentLoader.cpp" />
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="Graphics\Direct3D12\D3D12Core.cpp" />
