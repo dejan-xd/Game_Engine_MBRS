@@ -2,6 +2,8 @@
 
 #include "Common.hlsli"
 
+// NOTE: This constant is larger than max_lights_per_tile in light culling module (defined to be 256).
+//       This is because 256 is the maximum for the *average* number of lights per tile, whereas this constant is the maximum lights per tile.
 static const uint MaxLightsPerGroup = 1024;
 
 groupshared uint _minDepthVS; // tile's minimum depth in view-space
@@ -42,7 +44,7 @@ void CullLightsCS(ComputeShaderInput csIn)
     
     // NOTE: Not an error, leave it be!
     //       It has to do something with the DirectXShaderCompiler most likely.
-    const float depth = Texture2D( ResourceDescriptorHeap[ShaderParams.DepthBufferSrvIndex])[csIn.DispatchThreadID.xy].r; 
+    const float depth = Texture2D(ResourceDescriptorHeap[ShaderParams.DepthBufferSrvIndex])[csIn.DispatchThreadID.xy].r;
     const float depthVS = ClipToView(float4(0.f, 0.f, depth, 1.f), GlobalData.InvProjection).z;
     // Negate depth because of right-handed coorinates (negative z-axis).
     // This make the comparisons easier to understand.
