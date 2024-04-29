@@ -29,6 +29,60 @@ struct PerObjectData
     float4x4 WorldViewProjection;
 };
 
+struct Plane
+{
+    float3 Normal;
+    float Distance;
+};
+
+struct Sphere
+{
+    float3 Center;
+    float Radius;
+};
+
+struct Cone
+{
+    float3 Tip;
+    float Height;
+    float3 Direction;
+    float Radius;
+};
+
+#ifndef __cplusplus
+struct ComputeShaderInput
+{
+    uint3 GroupID : SV_GroupID; // 3D index of the thread group in the dispatch.
+    uint3 GroupThreadID : SV_GroupThreadID; // 3D index of local thread ID in a thread group.
+    uint3 DispatchThreadID : SV_DispatchThreadID; // 3D index of global thread ID in the dispatch.
+    uint GroupIndex : SV_GroupIndex; // Flattened local index of the thread within a thread group.
+};
+#endif
+
+// View frustum planes (in view space)
+// Plane order: left, right, top, bottom
+// Front and back planes are computed in light culling compute shader.
+struct Frustum
+{
+    Plane Planes[4];
+};
+
+struct LightCullingDispatchParameters
+{
+    // Number of groups dispatched. (This parameter is not available as an HLSL system value!)
+    uint2 NumThreadGroups;
+
+    // Total number of threads dispatched. (Also not available as an HLSL system value!)
+    // NOTE: This value may be less than the actual number of threads executed if the screen size is not evenly divisible by the block size.
+    uint2 NumThreads;
+
+    // Number of lights for culling (doesn't include directional lights, because those can't be culled).
+    uint NumLights;
+
+    // The index of currenct depth buffer in SRV descriptor heap
+    uint DepthBufferSrvIndex;
+};
+
 // Contains light culling data that's formated and ready to be copied to a D3D constant/structured buffer as a contiguous chunk.
 struct LightCullingLightInfo
 {
@@ -50,8 +104,8 @@ struct LightParameters
     float3 Color;
     float Range;
     float3 Attenuation;
-    float CosUmbra;         // cosine of the half angle of umbra
-    float CosPenumbra;      // cosine of the half angle of penumbra
+    float CosUmbra; // cosine of the half angle of umbra
+    float CosPenumbra; // cosine of the half angle of penumbra
     float3 _pad;
 };
 

@@ -69,7 +69,7 @@ namespace primal::graphics::d3d12 {
 		u32 alignment{ 0 };
 		bool create_uav{ false };
 	};
-	
+
 	class d3d12_buffer {
 
 	public:
@@ -116,7 +116,7 @@ namespace primal::graphics::d3d12 {
 		D3D12_GPU_VIRTUAL_ADDRESS   _gpu_address{ 0 };
 		u32                         _size{ 0 };
 	};
-	
+
 	class constant_buffer {
 
 	public:
@@ -141,7 +141,7 @@ namespace primal::graphics::d3d12 {
 		[[nodiscard]] constexpr ID3D12Resource* const buffer() const { return _buffer.buffer(); }
 		[[nodiscard]] constexpr D3D12_GPU_VIRTUAL_ADDRESS gpu_address() const { return _buffer.gpu_address(); }
 		[[nodiscard]] constexpr u32 size() const { return _buffer.size(); }
-		[[nodiscard]] constexpr u8 *const cpu_address() const { return _cpu_address; }
+		[[nodiscard]] constexpr u8* const cpu_address() const { return _cpu_address; }
 
 		template<typename T> [[nodiscard]] constexpr D3D12_GPU_VIRTUAL_ADDRESS gpu_address(T* const allocation) {
 			std::lock_guard lock{ _mutex };
@@ -161,7 +161,7 @@ namespace primal::graphics::d3d12 {
 			info.alignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
 			return info;
 		}
-		
+
 	private:
 		d3d12_buffer _buffer{};
 		u8* _cpu_address{ nullptr };
@@ -169,7 +169,78 @@ namespace primal::graphics::d3d12 {
 		std::mutex _mutex{};
 
 	};
-	
+
+	class structured_buffer {
+
+	public:
+		structured_buffer() = default;
+		explicit structured_buffer(const d3d12_buffer_init_info& info);
+		DISABLE_COPY(structured_buffer);
+		constexpr structured_buffer(structured_buffer&& o)
+			: _buffer{ std::move(o._buffer) }, _uav{ o._uav }, _uav_shader_visible{ o._uav_shader_visible }, _stride{ o._stride } {
+			o.reset();
+		}
+
+		constexpr structured_buffer& operator=(structured_buffer&& o) {
+			assert(this != &o);
+			if (this != &o) {
+				release();
+				move(o);
+			}
+			return *this;
+		}
+
+		~structured_buffer() { release(); }
+
+		void release();
+
+		void clear_uav(id3d12_graphics_command_list* const cmd_list, const u32* const values) const {
+			cmd_list->ClearUnorderedAccessViewUint(_uav_shader_visible.gpu, _uav.cpu, buffer(), values, 0, nullptr);
+		}
+
+		void clear_uav(id3d12_graphics_command_list* const cmd_list, const f32* const values) const {
+			cmd_list->ClearUnorderedAccessViewFloat(_uav_shader_visible.gpu, _uav.cpu, buffer(), values, 0, nullptr);
+		}
+
+		[[nodiscard]] constexpr ID3D12Resource* buffer() const { return _buffer.buffer(); }
+		[[nodiscard]] constexpr D3D12_GPU_VIRTUAL_ADDRESS gpu_address() const { return _buffer.gpu_address(); }
+		[[nodiscard]] constexpr u32 size() const { return _buffer.size(); }
+		[[nodiscard]] constexpr descriptor_handle uav() const { return _uav; }
+		[[nodiscard]] constexpr descriptor_handle uav_shader_visible() const { return _uav_shader_visible; }
+
+		[[nodiscard]] constexpr static d3d12_buffer_init_info get_default_init_info(u32 stride, u32 element_count) {
+			assert(stride && element_count);
+			d3d12_buffer_init_info info{};
+			info.size = stride * element_count;
+			info.stride = stride;
+			info.element_count = element_count;
+			info.alignment = stride;
+			info.flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+			return info;
+		}
+
+	private:
+		constexpr void move(structured_buffer& o) {
+			_buffer = std::move(o._buffer);
+			_uav = o._uav;
+			_uav_shader_visible = o._uav_shader_visible;
+			_stride = o._stride;
+			o.reset();
+		}
+
+		constexpr void reset() {
+			_uav = {};
+			_uav_shader_visible = {};
+			_stride = 0;
+		}
+
+		d3d12_buffer _buffer{};
+		descriptor_handle _uav{};
+		descriptor_handle _uav_shader_visible{};
+		u32 _stride{ 0 };
+
+	};
+
 	struct d3d12_texture_init_info {
 		ID3D12Heap1* heap{ nullptr };
 		ID3D12Resource* resource{ nullptr };
@@ -207,7 +278,6 @@ namespace primal::graphics::d3d12 {
 		[[nodiscard]] constexpr descriptor_handle srv() const { return _srv; }
 
 	private:
-
 		constexpr void move(d3d12_texture& o) {
 			_resource = o._resource;
 			_srv = o._srv;
@@ -230,7 +300,7 @@ namespace primal::graphics::d3d12 {
 		explicit d3d12_render_texture(d3d12_texture_init_info info);
 		DISABLE_COPY(d3d12_render_texture);
 
-		constexpr d3d12_render_texture(d3d12_render_texture&& o) : _texture{ std::move(o._texture) }, _mip_count{ o._mip_count }{
+		constexpr d3d12_render_texture(d3d12_render_texture&& o) : _texture{ std::move(o._texture) }, _mip_count{ o._mip_count } {
 			for (u32 i{ 0 }; i < _mip_count; ++i) _rtv[i] = o._rtv[i];
 			o.reset();
 		}
@@ -270,18 +340,18 @@ namespace primal::graphics::d3d12 {
 		u32 _mip_count{ 0 };
 	};
 
-	class d3d12_depth_bufffer {
+	class d3d12_depth_buffer {
 
 	public:
-		d3d12_depth_bufffer() = default;
-		explicit d3d12_depth_bufffer(d3d12_texture_init_info info);
-		DISABLE_COPY(d3d12_depth_bufffer);
+		d3d12_depth_buffer() = default;
+		explicit d3d12_depth_buffer(d3d12_texture_init_info info);
+		DISABLE_COPY(d3d12_depth_buffer);
 
-		constexpr d3d12_depth_bufffer(d3d12_depth_bufffer&& o) : _texture{ std::move(o._texture) }, _dsv{ o._dsv }{
+		constexpr d3d12_depth_buffer(d3d12_depth_buffer&& o) : _texture{ std::move(o._texture) }, _dsv{ o._dsv } {
 			o._dsv = {};
 		}
 
-		constexpr d3d12_depth_bufffer& operator=(d3d12_depth_bufffer&& o) {
+		constexpr d3d12_depth_buffer& operator=(d3d12_depth_buffer&& o) {
 			assert(this != &o);
 			if (this != &o) {
 				_texture = std::move(o._texture);
@@ -291,7 +361,7 @@ namespace primal::graphics::d3d12 {
 			return *this;
 		}
 
-		~d3d12_depth_bufffer() { release(); }
+		~d3d12_depth_buffer() { release(); }
 
 		void release();
 		[[nodiscard]] constexpr D3D12_CPU_DESCRIPTOR_HANDLE dsv() const { return _dsv.cpu; }

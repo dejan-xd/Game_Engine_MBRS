@@ -49,7 +49,7 @@ namespace {
 		}
 		else if (type == graphics::light::spot) {
 			info.spot_params.range = 2.f;
-			info.spot_params.umbra = 0.1f * math::pi;
+			info.spot_params.umbra = 0.7f * math::pi;
 			info.spot_params.penumbra = info.spot_params.umbra + (0.1f * math::pi);
 			info.spot_params.attenuation = { 1, 1, 1 };
 		}
@@ -101,10 +101,13 @@ void generate_lights() {
 	create_light({ 0, 0.2f, 1.f }, {}, graphics::light::point, left_set);
 	create_light({ 0, 3, 2.5f }, {}, graphics::light::point, left_set);
 	create_light({ 0, 0.1f, 7 }, { 0, 3.14f, 0 }, graphics::light::spot, left_set);
+
 #else
 	srand(37);
-	constexpr math::v3 scale{ 1.f, 0.5f, 1.f };
-	constexpr s32 dim{ 5 };
+
+	constexpr f32 scale1{ 2 };
+	constexpr math::v3 scale{ 1.f * scale1, 0.5f * scale1, 1.f * scale1 };
+	constexpr s32 dim{ 13 };
 	for (s32 x{ -dim }; x < dim; ++x) {
 		for (s32 y{ 0 }; y < 2 * dim; ++y) {
 			for (s32 z{ -dim }; z < dim; ++z) {
