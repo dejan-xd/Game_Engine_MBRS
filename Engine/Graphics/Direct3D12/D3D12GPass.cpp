@@ -4,7 +4,8 @@
 #include "D3D12Content.h"
 #include "D3D12Light.h"
 #include "D3D12Camera.h"
-#include "Shaders/ShaderTypes.h"
+#include "D3D12LightCulling.h"
+#include "Shaders/SharedTypes.h"
 #include "Components/Entity.h"
 #include "Components/Transform.h"
 
@@ -15,7 +16,7 @@ namespace primal::graphics::d3d12::gpass {
 		constexpr math::u32v2 initial_dimensions{ 100, 100 };
 
 		d3d12_render_texture gpass_main_buffer{};
-		d3d12_depth_bufffer gpass_depth_buffer{};
+		d3d12_depth_buffer gpass_depth_buffer{};
 		math::u32v2 dimensions{ initial_dimensions };
 
 #if _DEBUG
@@ -171,7 +172,7 @@ namespace primal::graphics::d3d12::gpass {
 				info.clear_value.DepthStencil.Depth = 0.f;
 				info.clear_value.DepthStencil.Stencil = 0;
 
-				gpass_depth_buffer = d3d12_depth_bufffer{ info };
+				gpass_depth_buffer = d3d12_depth_buffer{ info };
 			}
 
 			NAME_D3D12_OBJECT(gpass_main_buffer.resource(), L"GPass Main Buffer");
@@ -263,7 +264,7 @@ namespace primal::graphics::d3d12::gpass {
 		return gpass_main_buffer;
 	}
 
-	const d3d12_depth_bufffer& depth_buffer() {
+	const d3d12_depth_buffer& depth_buffer() {
 		return gpass_depth_buffer;
 	}
 
@@ -310,6 +311,8 @@ namespace primal::graphics::d3d12::gpass {
 	void render(id3d12_graphics_command_list* cmd_list, const d3d12_frame_info& d3d12_info) {
 		const gpass_cache& cache{ frame_cache };
 		const u32 items_count{ cache.size() };
+		const u32 frame_index{ d3d12_info.frame_index };
+		const id::id_type light_culling_id{ d3d12_info.light_culling_id };
 
 		ID3D12RootSignature* current_root_signature{ nullptr };
 		ID3D12PipelineState* current_pipeline_state{ nullptr };
@@ -317,10 +320,14 @@ namespace primal::graphics::d3d12::gpass {
 		for (u32 i{ 0 }; i < items_count; ++i) {
 			if (current_root_signature != cache.root_signatures[i])
 			{
+				using idx = opaque_root_parameter;
 				current_root_signature = cache.root_signatures[i];
 				cmd_list->SetGraphicsRootSignature(current_root_signature);
-				cmd_list->SetGraphicsRootConstantBufferView(opaque_root_parameter::global_shader_data, d3d12_info.global_shader_data);
-				cmd_list->SetGraphicsRootShaderResourceView(opaque_root_parameter::directional_lights, light::non_cullable_light_bufffer(d3d12_info.frame_index));
+				cmd_list->SetGraphicsRootConstantBufferView(idx::global_shader_data, d3d12_info.global_shader_data);
+				cmd_list->SetGraphicsRootShaderResourceView(idx::directional_lights, light::non_cullable_light_buffer(frame_index));
+				cmd_list->SetGraphicsRootShaderResourceView(idx::cullable_lights, light::cullable_light_buffer(frame_index));
+				cmd_list->SetGraphicsRootShaderResourceView(idx::light_grid, delight::light_grid_opaque(light_culling_id, frame_index));
+				cmd_list->SetGraphicsRootShaderResourceView(idx::light_index_list, delight::light_index_list_opaque(light_culling_id, frame_index));
 			}
 
 			if (current_pipeline_state != cache.gpass_pipeline_states[i]) {

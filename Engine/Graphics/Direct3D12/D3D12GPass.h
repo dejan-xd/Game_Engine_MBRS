@@ -13,11 +13,14 @@ namespace primal::graphics::d3d12::gpass {
 	struct opaque_root_parameter {
 		enum parameter : u32 {
 			global_shader_data,
+			per_object_data,
 			position_buffer,
 			element_buffer,
 			srv_indices,
 			directional_lights,
-			per_object_data,
+			cullable_lights,
+			light_grid,
+			light_index_list,
 
 			count
 		};
@@ -27,7 +30,7 @@ namespace primal::graphics::d3d12::gpass {
 	void shutdown();
 
 	[[nodiscard]] const d3d12_render_texture& main_buffer();
-	[[nodiscard]] const d3d12_depth_bufffer& depth_buffer();
+	[[nodiscard]] const d3d12_depth_buffer& depth_buffer();
 
 	// NOTE: call this every frame before rendering anything in gpass
 	void set_size(math::u32v2 size);

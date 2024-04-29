@@ -8,7 +8,7 @@
 #include "D3D12Light.h"
 #include "D3D12LightCulling.h"
 #include "D3D12Camera.h"
-#include "Shaders/ShaderTypes.h"
+#include "Shaders/SharedTypes.h"
 
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 613; }
 extern "C" { __declspec(dllexport) extern const char8_t* D3D12SDKPath = u8".\\D3D12\\"; }

@@ -1,6 +1,6 @@
 #include "D3D12Light.h"
 #include "D3D12Core.h"
-#include "Shaders/ShaderTypes.h"
+#include "Shaders/SharedTypes.h"
 #include "EngineAPI/GameEntity.h"
 #include "Components/Transform.h"
 
@@ -824,7 +824,7 @@ namespace primal::graphics::d3d12::light {
 		light_buffer.update_light_buffers(set, light_set_key, frame_index);
 	}
 
-	D3D12_GPU_VIRTUAL_ADDRESS non_cullable_light_bufffer(u32 frame_index) {
+	D3D12_GPU_VIRTUAL_ADDRESS non_cullable_light_buffer(u32 frame_index) {
 		const d3d12_light_buffer& light_buffer{ light_buffers[frame_index] };
 		return light_buffer.non_cullable_lights();
 	}
