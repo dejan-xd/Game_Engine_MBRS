@@ -72,6 +72,7 @@ void destroy_render_items();
 void get_render_items(id::id_type* items, u32 count);
 void generate_lights();
 void remove_lights();
+void test_lights(f32 dt);
 
 LRESULT win_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
@@ -298,7 +299,9 @@ void engine_test::run() {
 
 	timer.begin();
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	script::update(timer.dt_avg());
+	const f32 dt{ timer.dt_avg() };
+	script::update(dt);
+	// test_lights(dt);
 	for (u32 i{ 0 }; i < _countof(_surfaces); ++i) {
 		if (_surfaces[i].surface.surface.is_valid()) {
 			f32 thresholds[3]{};
@@ -311,7 +314,7 @@ void engine_test::run() {
 			info.render_item_count = 3;
 			info.thresholds = &thresholds[0];
 			info.light_set_key = light_set_key;
-			info.average_frame_time = timer.dt_avg();
+			info.average_frame_time = dt;
 			info.camera_id = _surfaces[i].camera.get_id();
 
 			assert(_countof(thresholds) >= info.render_item_count);

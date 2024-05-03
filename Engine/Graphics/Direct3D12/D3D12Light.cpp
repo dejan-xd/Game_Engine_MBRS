@@ -95,7 +95,7 @@ namespace primal::graphics::d3d12::light {
 					const light_id id{ _owners.add(light_owner{game_entity::entity_id{info.entity_id}, index, info.type, info.is_enabled}) };
 					_cullable_entity_ids[index] = _owners[id].entity_id;
 					_cullable_owners[index] = id;
-					_dirty_bits[index] = dirty_bits_mask;
+					make_dirty(index);
 					enable(id, info.is_enabled);
 					update_transform(index);
 
@@ -161,7 +161,7 @@ namespace primal::graphics::d3d12::light {
 				// NOTE: this is a reference to _enabled_light_count and will change its value!
 				u32& count{ _enabled_light_count };
 
-				// NOTE: dirty_bits is going to be set by swap_cullable_lights so we don't set it here
+				// NOTE: dirty_bits is going to be set by swap_cullable_lights, so we don't set it here
 				if (is_enabled) {
 					if (data_index > count) {
 						assert(count < _cullable_lights.size());
@@ -198,7 +198,7 @@ namespace primal::graphics::d3d12::light {
 					assert(_owners[_cullable_owners[index]].data_index == index);
 					assert(index < _cullable_lights.size());
 					_cullable_lights[index].Intensity = intensity;
-					_dirty_bits[index] = dirty_bits_mask;
+					make_dirty(index);
 				}
 			}
 
@@ -217,7 +217,7 @@ namespace primal::graphics::d3d12::light {
 					assert(_owners[_cullable_owners[index]].data_index == index);
 					assert(index < _cullable_lights.size());
 					_cullable_lights[index].Color = color;
-					_dirty_bits[index] = dirty_bits_mask;
+					make_dirty(index);
 				}
 			}
 
@@ -229,7 +229,7 @@ namespace primal::graphics::d3d12::light {
 				assert(owner.type != graphics::light::directional);
 				assert(index < _cullable_lights.size());
 				_cullable_lights[index].Attenuation = attenuation;
-				_dirty_bits[index] = dirty_bits_mask;
+				make_dirty(index);
 			}
 
 			CONSTEXPR void range(light_id id, f32 range) {
@@ -241,7 +241,7 @@ namespace primal::graphics::d3d12::light {
 				assert(index < _cullable_lights.size());
 				_cullable_lights[index].Range = range;
 				_culling_info[index].Range = range;
-				_dirty_bits[index] = dirty_bits_mask;
+				make_dirty(index);
 
 				if (owner.type == graphics::light::spot) {
 					_culling_info[index].ConeRadius = calculate_cone_radius(range, _cullable_lights[index].CosPenumbra);
@@ -257,7 +257,7 @@ namespace primal::graphics::d3d12::light {
 
 				umbra = math::clamp(umbra, 0.f, math::pi);
 				_cullable_lights[index].CosUmbra = DirectX::XMScalarCos(umbra * 0.5f);
-				_dirty_bits[index] = dirty_bits_mask;
+				make_dirty(index);
 
 				if (penumbra(id) < umbra) {
 					penumbra(id, umbra);
@@ -275,7 +275,7 @@ namespace primal::graphics::d3d12::light {
 				_cullable_lights[index].CosPenumbra = DirectX::XMScalarCos(penumbra * 0.5f);
 
 				_culling_info[index].ConeRadius = calculate_cone_radius(range(id), _cullable_lights[index].CosPenumbra);
-				_dirty_bits[index] = dirty_bits_mask;
+				make_dirty(index);
 			}
 
 			constexpr bool is_enabled(light_id id) const {
@@ -296,7 +296,7 @@ namespace primal::graphics::d3d12::light {
 				return _cullable_lights[index].Intensity;
 			}
 
-			constexpr math::v3 color(light_id id) {
+			constexpr math::v3 color(light_id id) const {
 				const light_owner& owner{ _owners[id] };
 				const u32 index{ owner.data_index };
 
@@ -363,8 +363,8 @@ namespace primal::graphics::d3d12::light {
 				return count;
 			}
 
-			CONSTEXPR void non_cullable_lights(hlsl::DirectionalLightParameters* const lights, [[maybe_unused]] u32 buffer_size) {
-				assert(buffer_size == math::align_size_up<D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(non_cullable_light_count() * sizeof(hlsl::DirectionalLightParameters)));
+			CONSTEXPR void non_cullable_lights(hlsl::DirectionalLightParameters* const lights, [[maybe_unused]] u32 buffer_size) const {
+				assert(buffer_size >= math::align_size_up<D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(non_cullable_light_count() * sizeof(hlsl::DirectionalLightParameters)));
 				const u32 count{ (u32)_non_cullable_owners.size() };
 				u32 index{ 0 };
 				for (u32 i{ 0 }; i < count; ++i) {
@@ -406,7 +406,7 @@ namespace primal::graphics::d3d12::light {
 					culling_info.Direction = params.Direction = entity.orientation();
 				}
 
-				_dirty_bits[index] = dirty_bits_mask;
+				make_dirty(index);
 			}
 
 			CONSTEXPR void add_cullable_light_parameters(const light_init_info& info, u32 index) {
@@ -475,9 +475,9 @@ namespace primal::graphics::d3d12::light {
 					_culling_info[index1] = _culling_info[index2];
 					_cullable_entity_ids[index1] = _cullable_entity_ids[index2];
 					std::swap(_cullable_owners[index1], _cullable_owners[index2]);
-					_dirty_bits[index1] = dirty_bits_mask;
+					make_dirty(index1);
 					assert(_owners[_cullable_owners[index1]].entity_id == _cullable_entity_ids[index1]);
-					assert(id::is_valid(_cullable_owners[index2]));
+					assert(!id::is_valid(_cullable_owners[index2]));
 				}
 				else {
 					light_owner& owner1{ _owners[_cullable_owners[index1]] };
@@ -496,11 +496,14 @@ namespace primal::graphics::d3d12::light {
 					assert(_owners[_cullable_owners[index2]].entity_id == _cullable_entity_ids[index2]);
 
 					// set dirty bits
-					assert(index1 < _dirty_bits.size());
-					assert(index2 < _dirty_bits.size());
-					_dirty_bits[index1] = dirty_bits_mask;
-					_dirty_bits[index2] = dirty_bits_mask;
+					make_dirty(index1);
+					make_dirty(index2);
 				}
+			}
+
+			CONSTEXPR void make_dirty(u32 index) {
+				assert(index < _dirty_bits.size());
+				_something_is_dirty = _dirty_bits[index] = dirty_bits_mask;
 			}
 
 			// NOTE: these are NOT tightly packed
@@ -516,7 +519,8 @@ namespace primal::graphics::d3d12::light {
 			utl::vector<u8> _dirty_bits;
 
 			utl::vector<u8> _transform_flags_cache;
-			u32 _enabled_light_count{ 0 };	// number of cullable lights
+			u32 _enabled_light_count{ 0 }; // number of cullable lights
+			u8 _something_is_dirty{ 0 }; // flag is set if any of the cullable lights were changed
 
 			friend class d3d12_light_buffer;
 		};
@@ -527,60 +531,65 @@ namespace primal::graphics::d3d12::light {
 			d3d12_light_buffer() = default;
 
 			CONSTEXPR void update_light_buffers(light_set& set, [[maybe_unused]] u64 light_set_key, u32 frame_index) {
-				u32 sizes[light_buffer::count]{};
-				sizes[light_buffer::non_cullable_light] = set.non_cullable_light_count() * sizeof(hlsl::DirectionalLightParameters);
-				sizes[light_buffer::cullable_light] = set.cullable_light_count() * sizeof(hlsl::LightParameters);
-				sizes[light_buffer::culling_info] = set.cullable_light_count() * sizeof(hlsl::LightCullingLightInfo);
 
-				u32 current_sizes[light_buffer::count]{};
-				current_sizes[light_buffer::non_cullable_light] = _buffers[light_buffer::non_cullable_light].buffer.size();
-				current_sizes[light_buffer::cullable_light] = _buffers[light_buffer::cullable_light].buffer.size();
-				current_sizes[light_buffer::culling_info] = _buffers[light_buffer::culling_info].buffer.size();
+				const u32 non_cullable_light_count{ set.non_cullable_light_count() };
 
-				if (current_sizes[light_buffer::non_cullable_light] < sizes[light_buffer::non_cullable_light]) {
-					resize_buffer(light_buffer::non_cullable_light, sizes[light_buffer::non_cullable_light], frame_index);
+				if (non_cullable_light_count) {
+					const u32 needed_size{ non_cullable_light_count * sizeof(hlsl::DirectionalLightParameters) };
+					const u32 current_size{ _buffers[light_buffer::non_cullable_light].buffer.size() };
+
+					if (current_size < needed_size) {
+						resize_buffer(light_buffer::non_cullable_light, needed_size, frame_index);
+					}
+
+					set.non_cullable_lights((hlsl::DirectionalLightParameters* const)_buffers[light_buffer::non_cullable_light].cpu_address,
+						_buffers[light_buffer::non_cullable_light].buffer.size());
 				}
-
-				set.non_cullable_lights((hlsl::DirectionalLightParameters* const)_buffers[light_buffer::non_cullable_light].cpu_address,
-					_buffers[light_buffer::non_cullable_light].buffer.size());
 
 				// Update cullable light buffers
-				bool buffers_resized{ false };
-				if (current_sizes[light_buffer::cullable_light] < sizes[light_buffer::cullable_light]) {
-					assert(current_sizes[light_buffer::culling_info] < sizes[light_buffer::culling_info]);
-					resize_buffer(light_buffer::cullable_light, sizes[light_buffer::cullable_light], frame_index);
-					resize_buffer(light_buffer::culling_info, sizes[light_buffer::culling_info], frame_index);
-					buffers_resized = true;
-				}
+				const u32 cullable_light_count{ set.cullable_light_count() };
 
-				bool all_lights_updated{ false };
-				if (buffers_resized || _current_light_set_key != light_set_key) {
-					memcpy(_buffers[light_buffer::cullable_light].cpu_address, set._cullable_lights.data(), sizes[light_buffer::cullable_light]);
-					memcpy(_buffers[light_buffer::culling_info].cpu_address, set._culling_info.data(), sizes[light_buffer::culling_info]);
-					_current_light_set_key = light_set_key;
-					all_lights_updated = true;
-				}
+				if (cullable_light_count) {
 
-				assert(_current_light_set_key == light_set_key);
-				const u32 index_mask{ 1UL << frame_index };
+					const u32 needed_light_buffer_size{ cullable_light_count * sizeof(hlsl::LightParameters) };
+					const u32 needed_culling_buffer_size{ cullable_light_count * sizeof(hlsl::LightCullingLightInfo) };
+					const u32 current_light_buffer_size{ _buffers[light_buffer::cullable_light].buffer.size() };
 
-				if (all_lights_updated) {
-					for (u32 i{ 0 }; i < set.cullable_light_count(); ++i) {
-						set._dirty_bits[i] &= ~index_mask;
+					bool buffers_resized{ false };
+					if (current_light_buffer_size < needed_light_buffer_size) {
+						// NOTE: we create buffers about 150% larger than needed to avoid recreating them everytime a few lights are added.
+						resize_buffer(light_buffer::cullable_light, (needed_light_buffer_size * 3) >> 1, frame_index);
+						resize_buffer(light_buffer::culling_info, (needed_culling_buffer_size * 3) >> 1, frame_index);
+						buffers_resized = true;
 					}
-				}
-				else {
-					for (u32 i{ 0 }; i < set.cullable_light_count(); ++i) {
-						if (set._dirty_bits[i] & index_mask) {
-							assert(i * sizeof(hlsl::LightParameters) < sizes[light_buffer::cullable_light]);
-							assert(i * sizeof(hlsl::LightCullingLightInfo) < sizes[light_buffer::culling_info]);
-							u8* const light_dst{ _buffers[light_buffer::cullable_light].cpu_address + (i * sizeof(hlsl::LightParameters)) };
-							u8* const culling_dst{ _buffers[light_buffer::culling_info].cpu_address + (i * sizeof(hlsl::LightCullingLightInfo)) };
-							memcpy(light_dst, &set._cullable_lights[i], sizeof(hlsl::LightParameters));
-							memcpy(culling_dst, &set._culling_info[i], sizeof(hlsl::LightCullingLightInfo));
+
+					const u32 index_mask{ 1UL << frame_index };
+					if (buffers_resized || _current_light_set_key != light_set_key) {
+						memcpy(_buffers[light_buffer::cullable_light].cpu_address, set._cullable_lights.data(), needed_light_buffer_size);
+						memcpy(_buffers[light_buffer::culling_info].cpu_address, set._culling_info.data(), needed_culling_buffer_size);
+						_current_light_set_key = light_set_key;
+
+						for (u32 i{ 0 }; i < cullable_light_count; ++i) {
 							set._dirty_bits[i] &= ~index_mask;
 						}
 					}
+					else if (set._something_is_dirty) {
+						for (u32 i{ 0 }; i < cullable_light_count; ++i) {
+							if (set._dirty_bits[i] & index_mask) {
+								assert(i * sizeof(hlsl::LightParameters) < needed_light_buffer_size);
+								assert(i * sizeof(hlsl::LightCullingLightInfo) < needed_culling_buffer_size);
+								u8* const light_dst{ _buffers[light_buffer::cullable_light].cpu_address + (i * sizeof(hlsl::LightParameters)) };
+								u8* const culling_dst{ _buffers[light_buffer::culling_info].cpu_address + (i * sizeof(hlsl::LightCullingLightInfo)) };
+								memcpy(light_dst, &set._cullable_lights[i], sizeof(hlsl::LightParameters));
+								memcpy(culling_dst, &set._culling_info[i], sizeof(hlsl::LightCullingLightInfo));
+								set._dirty_bits[i] &= ~index_mask;
+							}
+						}
+					}
+
+					set._something_is_dirty &= ~index_mask;
+					assert(_current_light_set_key == light_set_key);
+
 				}
 			}
 
@@ -611,9 +620,8 @@ namespace primal::graphics::d3d12::light {
 
 			void resize_buffer(light_buffer::type type, u32 size, [[maybe_unused]] u32 frame_index) {
 				assert(type < light_buffer::count);
-				if (!size) return;
+				if (!size || _buffers[type].buffer.size() >= math::align_size_up<D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(size)) return;
 
-				_buffers[type].buffer.release();
 				_buffers[type].buffer = d3d12_buffer{ constant_buffer::get_default_init_info(size), true };
 
 				NAME_D3D12_OBJECT_INDEXED(_buffers[type].buffer.buffer(), frame_index,
@@ -625,7 +633,7 @@ namespace primal::graphics::d3d12::light {
 				assert(_buffers[type].cpu_address);
 			}
 
-			light_buffer _buffers[light_buffer::count];
+			light_buffer _buffers[light_buffer::count]{};
 			u64 _current_light_set_key{ 0 };
 
 		};
@@ -675,55 +683,55 @@ namespace primal::graphics::d3d12::light {
 			set.penumbra(id, penumbra);
 		}
 
-		constexpr void get_is_enabled(light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
+		constexpr void get_is_enabled(const light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
 			bool* const is_enabled{ (bool* const)data };
 			assert(sizeof(bool) == size);
 			*is_enabled = set.is_enabled(id);
 		}
 
-		constexpr void get_intensity(light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
+		constexpr void get_intensity(const light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
 			f32* const intensity{ (f32* const)data };
 			assert(sizeof(f32) == size);
 			*intensity = set.intensity(id);
 		}
 
-		constexpr void get_color(light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
+		constexpr void get_color(const light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
 			math::v3* const color{ (math::v3* const)data };
 			assert(sizeof(math::v3) == size);
 			*color = set.color(id);
 		}
 
-		CONSTEXPR void get_attenuation(light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
+		CONSTEXPR void get_attenuation(const light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
 			math::v3* const attenuation{ (math::v3* const)data };
 			assert(sizeof(math::v3) == size);
 			*attenuation = set.attenuation(id);
 		}
 
-		CONSTEXPR void get_range(light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
+		CONSTEXPR void get_range(const light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
 			f32* const range{ (f32* const)data };
 			assert(sizeof(f32) == size);
 			*range = set.range(id);
 		}
 
-		void get_umbra(light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
+		void get_umbra(const light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
 			f32* const umbra{ (f32* const)data };
 			assert(sizeof(f32) == size);
 			*umbra = set.umbra(id);
 		}
 
-		void get_penumbra(light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
+		void get_penumbra(const light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
 			f32* const penumbra{ (f32* const)data };
 			assert(sizeof(f32) == size);
 			*penumbra = set.penumbra(id);
 		}
 
-		constexpr void get_type(light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
+		constexpr void get_type(const light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
 			graphics::light::type* const type{ (graphics::light::type* const)data };
 			assert(sizeof(graphics::light::type) == size);
 			*type = set.type(id);
 		}
 
-		constexpr void get_entity_id(light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
+		constexpr void get_entity_id(const light_set& set, light_id id, void* const data, [[maybe_unused]] u32 size) {
 			id::id_type* const entity_id{ (id::id_type* const)data };
 			assert(sizeof(id::id_type) == size);
 			*entity_id = set.entity_id(id);
@@ -732,7 +740,7 @@ namespace primal::graphics::d3d12::light {
 		constexpr void dummy_set(light_set&, light_id, const void* const, u32) {}
 
 		using set_function = void(*)(light_set&, light_id, const void* const, u32);
-		using get_function = void(*)(light_set&, light_id, void* const, u32);
+		using get_function = void(*)(const light_set&, light_id, void* const, u32);
 
 		constexpr set_function set_functions[]
 		{
@@ -773,7 +781,7 @@ namespace primal::graphics::d3d12::light {
 	}
 
 	void shutdown() {
-		// make sure to remove all light before shutting down graphics
+		// make sure to remove all lights before shutting down graphics.
 		assert([] {
 			bool has_lights{ false };
 			for (const auto& it : light_sets) {
@@ -840,12 +848,12 @@ namespace primal::graphics::d3d12::light {
 	}
 
 	u32 non_cullable_light_count(u64 light_set_key) {
-		assert(light_sets.count(light_set_key));
+		// assert(light_sets.count(light_set_key));
 		return light_sets[light_set_key].non_cullable_light_count();
 	}
 
 	u32 cullable_light_count(u64 light_set_key) {
-		assert(light_sets.count(light_set_key));
+		// assert(light_sets.count(light_set_key));
 		return light_sets[light_set_key].cullable_light_count();
 	}
 }
