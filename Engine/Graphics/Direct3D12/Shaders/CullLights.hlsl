@@ -2,6 +2,127 @@
 
 #include "Common.hlsli"
 
+#if USE_BOUNDING_SPHERES
+// NOTE: This constant is larger than max_lights_per_tile in light culling module (defined to be 256).
+//       This is because 256 is the maximum for the *average* number of lights per tile, whereas this constant is the maximum lights per tile.
+static const uint MaxLightsPerGroup = 1024;
+
+groupshared uint _minDepthVS; // tile's minimum depth in view-space
+groupshared uint _maxDepthVS; // tile's maximum depth in view-space
+groupshared uint _lightCount; // number of lights that affect pixels in this tile
+groupshared uint _lightIndexStartOffset; // offset in the global light index list where we copy _lightIndexList
+groupshared uint _lightIndexList[MaxLightsPerGroup]; // indices of lights that affect this tile
+
+ConstantBuffer<GlobalShaderData> GlobalData : register(b0, space0);
+ConstantBuffer<LightCullingDispatchParameters> ShaderParams : register(b1, space0);
+StructuredBuffer<Frustum> Frustums : register(t0, space0);
+StructuredBuffer<LightCullingLightInfo> Lights : register(t1, space0);
+
+RWStructuredBuffer<uint> LightIndexCounter : register(u0, space0);
+RWStructuredBuffer<uint2> LightGrid_Opaque : register(u1, space0);
+// TODO: add buffers to handle lights that could affect transparent objects (skipped u2 register for this purpose)
+RWStructuredBuffer<uint> LightIndexList_Opaque : register(u3, space0);
+
+Sphere GetConeBoundingSphere(float3 tip, float range, float3 direction, float cosPenumbra)
+{
+    Sphere sphere;
+    sphere.Radius = range / (2.0f * cosPenumbra);
+    sphere.Center = tip + sphere.Radius * direction;
+
+    if (cosPenumbra < 0.707107f) // cos(45) ~= 0.707107
+    {
+        const float coneSin = sqrt(1.f - cosPenumbra * cosPenumbra); // sin²(x) + cos²(x) = 1 => sin(x) = sqrt(1 - cos²(x))
+        sphere.Center = tip + cosPenumbra * range * direction;
+        sphere.Radius = coneSin * range;
+    }
+
+    return sphere;
+}
+
+// NOTE: TILE_SIZE is defined by the engine at compile-time.
+[numthreads(TILE_SIZE, TILE_SIZE, 1)]
+void CullLightsCS(ComputeShaderInput csIn)
+{
+    // INITIALIZATION SECTION
+    
+    // NOTE: Not an error, leave it be! It has to do something with the DirectXShaderCompiler most likely.
+    const float depth = Texture2D(ResourceDescriptorHeap[ShaderParams.DepthBufferSrvIndex])[csIn.DispatchThreadID.xy].r;
+    const float C = GlobalData.Projection._m22;
+    const float D = GlobalData.Projection._m23;
+    const uint gridIndex = csIn.GroupID.x + (csIn.GroupID.y * ShaderParams.NumThreadGroups.x);
+    const Frustum frustum = Frustums[gridIndex];
+    
+    if (csIn.GroupIndex == 0) // only the first thread in the group need to initialize groupshared memory
+    {
+        _minDepthVS = 0x7f7fffff; // FLT_MAX as uint
+        _maxDepthVS = 0;
+        _lightCount = 0;
+    }
+
+    uint i = 0, index = 0; // reusable index variables.
+    
+    // DEPTH MIN/MAX SECTION
+    GroupMemoryBarrierWithGroupSync();
+    
+    if (depth != 0) // Don't include far plane (depth == 0 is mapped to far-plane)
+    {
+        // Negate depth because of right-handed coorinates (negative z-axis).
+        // This make the comparisons easier to understand.
+        const uint z = asuint(D / (depth + C)); // -depthVS as uint
+        InterlockedMin(_minDepthVS, z);
+        InterlockedMax(_maxDepthVS, z);
+    }
+    
+    // LIGHT CULLING SECTION
+    GroupMemoryBarrierWithGroupSync();
+    
+    // Negate view-space min/max again
+    const float minDepthVS = -asfloat(_minDepthVS);
+    const float maxDepthVS = -asfloat(_maxDepthVS);
+
+    for (i = csIn.GroupIndex; i < ShaderParams.NumLights; i += TILE_SIZE * TILE_SIZE)
+    {
+        const LightCullingLightInfo light = Lights[i];
+        const float3 lightPositionVS = mul(GlobalData.View, float4(light.Position, 1.f)).xyz;
+        
+        Sphere sphere = { lightPositionVS, light.Range };
+
+        if (light.Type == LIGHT_TYPE_SPOTLIGHT)
+        {
+            const float3 lightDirectionVS = mul(GlobalData.View, float4(light.Direction, 0.f)).xyz;
+            sphere = GetConeBoundingSphere(lightPositionVS, light.Range, lightDirectionVS, light.CosPenumbra);
+        }
+        
+        if (SphereInsideFrustum(sphere, frustum, minDepthVS, maxDepthVS))
+        {
+            InterlockedAdd(_lightCount, 1, index);
+            if (index < MaxLightsPerGroup)
+                _lightIndexList[index] = i;
+        }
+    }
+    
+    // UPDATE LIGHT GRID SECTION
+    GroupMemoryBarrierWithGroupSync();
+    
+    const uint lightCount = min(_lightCount, MaxLightsPerGroup);
+
+    if (csIn.GroupIndex == 0)
+    {
+        InterlockedAdd(LightIndexCounter[0], lightCount, _lightIndexStartOffset);
+        LightGrid_Opaque[gridIndex] = uint2(_lightIndexStartOffset, lightCount);
+    }
+    
+    // UPDATE LIGHT INDEX LIST SECTION
+    GroupMemoryBarrierWithGroupSync();
+    
+    for (i = csIn.GroupIndex; i < lightCount; i += TILE_SIZE * TILE_SIZE)
+    {
+        LightIndexList_Opaque[_lightIndexStartOffset + i] = _lightIndexList[i];
+    }
+    
+}
+
+#else
 // NOTE: This constant is larger than max_lights_per_tile in light culling module (defined to be 256).
 //       This is because 256 is the maximum for the *average* number of lights per tile, whereas this constant is the maximum lights per tile.
 static const uint MaxLightsPerGroup = 1024;
@@ -42,8 +163,7 @@ void CullLightsCS(ComputeShaderInput csIn)
     // DEPTH MIN/MAX SECTION
     GroupMemoryBarrierWithGroupSync();
     
-    // NOTE: Not an error, leave it be!
-    //       It has to do something with the DirectXShaderCompiler most likely.
+    // NOTE: Not an error, leave it be! It has to do something with the DirectXShaderCompiler most likely.
     const float depth = Texture2D(ResourceDescriptorHeap[ShaderParams.DepthBufferSrvIndex])[csIn.DispatchThreadID.xy].r;
     const float depthVS = ClipToView(float4(0.f, 0.f, depth, 1.f), GlobalData.InvProjection).z;
     // Negate depth because of right-handed coorinates (negative z-axis).
@@ -56,7 +176,7 @@ void CullLightsCS(ComputeShaderInput csIn)
         InterlockedMax(_maxDepthVS, z);
     }
     
-    // LIGHT CUILLING SECTION
+    // LIGHT CULLING SECTION
     GroupMemoryBarrierWithGroupSync();
     
     const uint gridIndex = csIn.GroupID.x + (csIn.GroupID.y * ShaderParams.NumThreadGroups.x);
@@ -113,3 +233,4 @@ void CullLightsCS(ComputeShaderInput csIn)
     }
     
 }
+#endif

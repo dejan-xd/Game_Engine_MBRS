@@ -186,7 +186,7 @@ bool read_file(std::filesystem::path path, std::unique_ptr<u8[]>& data, u64& siz
 void create_camera_surface(camera_surface& surface, platform::window_init_info info) {
 	surface.surface.window = platform::create_window(&info);
 	surface.surface.surface = graphics::create_surface(surface.surface.window);
-	surface.entity = create_one_game_entity({ 13.76f, 3.f, -1.1f }, { -0.117f, -2.1f, 0.f }, "camera_script");
+	surface.entity = create_one_game_entity({ 13.76f, 3.f, -1.1f }, { -0.137f, -1.70f, 0.f }, "camera_script");
 	surface.camera = graphics::create_camera(graphics::perspective_camera_init_info{ surface.entity.get_id() });
 	surface.camera.aspect_ratio((f32)surface.surface.window.width() / surface.surface.window.height());
 }
@@ -298,7 +298,7 @@ void engine_test::run() {
 	// if ((counter % 90) == 0) light_set_key = (light_set_key + 1) % 2;
 
 	timer.begin();
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	// std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	const f32 dt{ timer.dt_avg() };
 	script::update(dt);
 	// test_lights(dt);

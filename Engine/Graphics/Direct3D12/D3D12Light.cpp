@@ -244,7 +244,11 @@ namespace primal::graphics::d3d12::light {
 				make_dirty(index);
 
 				if (owner.type == graphics::light::spot) {
+#if USE_BOUNDING_SPHERES
+					_culling_info[index].CosPenumbra = _cullable_lights[index].CosPenumbra;
+#else
 					_culling_info[index].ConeRadius = calculate_cone_radius(range, _cullable_lights[index].CosPenumbra);
+#endif
 				}
 			}
 
@@ -274,7 +278,11 @@ namespace primal::graphics::d3d12::light {
 				penumbra = math::clamp(penumbra, umbra(id), math::pi);
 				_cullable_lights[index].CosPenumbra = DirectX::XMScalarCos(penumbra * 0.5f);
 
+#if USE_BOUNDING_SPHERES
+				_culling_info[index].CosPenumbra = _cullable_lights[index].CosPenumbra;
+#else
 				_culling_info[index].ConeRadius = calculate_cone_radius(range(id), _cullable_lights[index].CosPenumbra);
+#endif
 				make_dirty(index);
 			}
 
@@ -446,7 +454,11 @@ namespace primal::graphics::d3d12::light {
 				culling_info.Type = params.Type;
 
 				if (info.type == light::spot) {
+#if USE_BOUNDING_SPHERES
+					culling_info.CosPenumbra = params.CosPenumbra;
+#else
 					culling_info.ConeRadius = calculate_cone_radius(params.Range, params.CosPenumbra);
+#endif
 				}
 			}
 
