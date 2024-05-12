@@ -81,11 +81,13 @@ namespace primal::graphics::d3d12::light {
 						index = (u32)_cullable_owners.size();
 						_cullable_lights.emplace_back();
 						_culling_info.emplace_back();
+						_bounding_spheres.emplace_back();
 						_cullable_entity_ids.emplace_back();
 						_cullable_owners.emplace_back();
 						_dirty_bits.emplace_back();
 						assert(_cullable_owners.size() == _cullable_lights.size());
 						assert(_cullable_owners.size() == _culling_info.size());
+						assert(_cullable_owners.size() == _bounding_spheres.size());
 						assert(_cullable_owners.size() == _cullable_entity_ids.size());
 						assert(_cullable_owners.size() == _dirty_bits.size());
 					}
@@ -241,9 +243,12 @@ namespace primal::graphics::d3d12::light {
 				assert(index < _cullable_lights.size());
 				_cullable_lights[index].Range = range;
 				_culling_info[index].Range = range;
+
+				_bounding_spheres[index].Radius = range;
 				make_dirty(index);
 
 				if (owner.type == graphics::light::spot) {
+					calculate_cone_bounding_sphere(_cullable_lights[index], _bounding_spheres[index]);
 #if USE_BOUNDING_SPHERES
 					_culling_info[index].CosPenumbra = _cullable_lights[index].CosPenumbra;
 #else
@@ -277,6 +282,7 @@ namespace primal::graphics::d3d12::light {
 
 				penumbra = math::clamp(penumbra, umbra(id), math::pi);
 				_cullable_lights[index].CosPenumbra = DirectX::XMScalarCos(penumbra * 0.5f);
+				calculate_cone_bounding_sphere(_cullable_lights[index], _bounding_spheres[index]);
 
 #if USE_BOUNDING_SPHERES
 				_culling_info[index].CosPenumbra = _cullable_lights[index].CosPenumbra;
@@ -402,16 +408,36 @@ namespace primal::graphics::d3d12::light {
 				return sin_penumbra * range;
 			}
 
+			void calculate_cone_bounding_sphere(const hlsl::LightParameters& params, hlsl::Sphere& sphere) {
+				using namespace DirectX;
+
+				XMVECTOR tip{ XMLoadFloat3(&params.Position) };
+				XMVECTOR direction{ XMLoadFloat3(&params.Direction) };
+				const f32 cone_cos{ params.CosPenumbra };
+				assert(cone_cos > 0.f);
+
+				if (cone_cos >= 0.707107f) { // cos(45) ~= 0.707107
+					sphere.Radius = params.Range / (2.f * cone_cos);
+					XMStoreFloat3(&sphere.Center, tip + sphere.Radius * direction);
+				}
+				else {
+					XMStoreFloat3(&sphere.Center, tip + cone_cos * params.Range * direction);
+					const f32 cone_sin{ sqrt(1.f - cone_cos * cone_cos) };
+					sphere.Radius = cone_sin * params.Range;
+				}
+			}
+
 			void update_transform(u32 index) {
 				const game_entity::entity entity{ game_entity::entity_id{_cullable_entity_ids[index]} };
 				hlsl::LightParameters& params{ _cullable_lights[index] };
 				params.Position = entity.position();
 
 				hlsl::LightCullingLightInfo& culling_info{ _culling_info[index] };
-				culling_info.Position = params.Position;
+				culling_info.Position = _bounding_spheres[index].Center = params.Position;
 
 				if (params.Type == graphics::light::spot) {
 					culling_info.Direction = params.Direction = entity.orientation();
+					calculate_cone_bounding_sphere(params, _bounding_spheres[index]);
 				}
 
 				make_dirty(index);
@@ -445,11 +471,11 @@ namespace primal::graphics::d3d12::light {
 				using graphics::light;
 				assert(info.type != light::directional && index < _culling_info.size());
 
-				hlsl::LightParameters& params{ _cullable_lights[index] };
+				const hlsl::LightParameters& params{ _cullable_lights[index] };
 				assert(params.Type == info.type);
 
 				hlsl::LightCullingLightInfo& culling_info{ _culling_info[index] };
-				culling_info.Range = params.Range;
+				culling_info.Range = _bounding_spheres[index].Radius = params.Range;
 
 				culling_info.Type = params.Type;
 
@@ -470,6 +496,8 @@ namespace primal::graphics::d3d12::light {
 				assert(index2 < _cullable_lights.size());
 				assert(index1 < _culling_info.size());
 				assert(index2 < _culling_info.size());
+				assert(index1 < _bounding_spheres.size());
+				assert(index2 < _bounding_spheres.size());
 				assert(index1 < _cullable_entity_ids.size());
 				assert(index2 < _cullable_entity_ids.size());
 				assert(id::is_valid(_cullable_owners[index1]) || id::is_valid(_cullable_owners[index2]));
@@ -485,6 +513,7 @@ namespace primal::graphics::d3d12::light {
 
 					_cullable_lights[index1] = _cullable_lights[index2];
 					_culling_info[index1] = _culling_info[index2];
+					_bounding_spheres[index1] = _bounding_spheres[index2];
 					_cullable_entity_ids[index1] = _cullable_entity_ids[index2];
 					std::swap(_cullable_owners[index1], _cullable_owners[index2]);
 					make_dirty(index1);
@@ -501,6 +530,7 @@ namespace primal::graphics::d3d12::light {
 
 					std::swap(_cullable_lights[index1], _cullable_lights[index2]);
 					std::swap(_culling_info[index1], _culling_info[index2]);
+					std::swap(_bounding_spheres[index1], _bounding_spheres[index2]);
 					std::swap(_cullable_entity_ids[index1], _cullable_entity_ids[index2]);
 					std::swap(_cullable_owners[index1], _cullable_owners[index2]);
 
@@ -526,6 +556,7 @@ namespace primal::graphics::d3d12::light {
 			// NOTE: those are tightly packed
 			utl::vector<hlsl::LightParameters> _cullable_lights;
 			utl::vector<hlsl::LightCullingLightInfo> _culling_info;
+			utl::vector<hlsl::Sphere> _bounding_spheres;
 			utl::vector<game_entity::entity_id> _cullable_entity_ids;
 			utl::vector<light_id> _cullable_owners;
 			utl::vector<u8> _dirty_bits;
@@ -565,6 +596,7 @@ namespace primal::graphics::d3d12::light {
 
 					const u32 needed_light_buffer_size{ cullable_light_count * sizeof(hlsl::LightParameters) };
 					const u32 needed_culling_buffer_size{ cullable_light_count * sizeof(hlsl::LightCullingLightInfo) };
+					const u32 needed_spheres_buffer_size{ cullable_light_count * sizeof(hlsl::Sphere) };
 					const u32 current_light_buffer_size{ _buffers[light_buffer::cullable_light].buffer.size() };
 
 					bool buffers_resized{ false };
@@ -572,6 +604,7 @@ namespace primal::graphics::d3d12::light {
 						// NOTE: we create buffers about 150% larger than needed to avoid recreating them everytime a few lights are added.
 						resize_buffer(light_buffer::cullable_light, (needed_light_buffer_size * 3) >> 1, frame_index);
 						resize_buffer(light_buffer::culling_info, (needed_culling_buffer_size * 3) >> 1, frame_index);
+						resize_buffer(light_buffer::bounding_spheres, (needed_spheres_buffer_size * 3) >> 1, frame_index);
 						buffers_resized = true;
 					}
 
@@ -579,6 +612,7 @@ namespace primal::graphics::d3d12::light {
 					if (buffers_resized || _current_light_set_key != light_set_key) {
 						memcpy(_buffers[light_buffer::cullable_light].cpu_address, set._cullable_lights.data(), needed_light_buffer_size);
 						memcpy(_buffers[light_buffer::culling_info].cpu_address, set._culling_info.data(), needed_culling_buffer_size);
+						memcpy(_buffers[light_buffer::bounding_spheres].cpu_address, set._bounding_spheres.data(), needed_spheres_buffer_size);
 						_current_light_set_key = light_set_key;
 
 						for (u32 i{ 0 }; i < cullable_light_count; ++i) {
@@ -592,8 +626,10 @@ namespace primal::graphics::d3d12::light {
 								assert(i * sizeof(hlsl::LightCullingLightInfo) < needed_culling_buffer_size);
 								u8* const light_dst{ _buffers[light_buffer::cullable_light].cpu_address + (i * sizeof(hlsl::LightParameters)) };
 								u8* const culling_dst{ _buffers[light_buffer::culling_info].cpu_address + (i * sizeof(hlsl::LightCullingLightInfo)) };
+								u8* const bounding_dst{ _buffers[light_buffer::bounding_spheres].cpu_address + (i * sizeof(hlsl::Sphere)) };
 								memcpy(light_dst, &set._cullable_lights[i], sizeof(hlsl::LightParameters));
 								memcpy(culling_dst, &set._culling_info[i], sizeof(hlsl::LightCullingLightInfo));
+								memcpy(bounding_dst, &set._bounding_spheres[i], sizeof(hlsl::Sphere));
 								set._dirty_bits[i] &= ~index_mask;
 							}
 						}
@@ -615,6 +651,7 @@ namespace primal::graphics::d3d12::light {
 			constexpr D3D12_GPU_VIRTUAL_ADDRESS non_cullable_lights() const { return _buffers[light_buffer::non_cullable_light].buffer.gpu_address(); }
 			constexpr D3D12_GPU_VIRTUAL_ADDRESS cullable_lights() const { return _buffers[light_buffer::cullable_light].buffer.gpu_address(); }
 			constexpr D3D12_GPU_VIRTUAL_ADDRESS culling_info() const { return _buffers[light_buffer::culling_info].buffer.gpu_address(); }
+			constexpr D3D12_GPU_VIRTUAL_ADDRESS bounding_spheres() const { return _buffers[light_buffer::bounding_spheres].buffer.gpu_address(); }
 
 		private:
 			struct light_buffer {
@@ -622,6 +659,7 @@ namespace primal::graphics::d3d12::light {
 					non_cullable_light,
 					cullable_light,
 					culling_info,
+					bounding_spheres,
 
 					count
 				};
@@ -638,7 +676,8 @@ namespace primal::graphics::d3d12::light {
 
 				NAME_D3D12_OBJECT_INDEXED(_buffers[type].buffer.buffer(), frame_index,
 					type == light_buffer::non_cullable_light ? L"Non-cullable Light Buffer" :
-					type == light_buffer::cullable_light ? L"Cullable Light Buffer" : L"Light Culling Info Buffer");
+					type == light_buffer::cullable_light ? L"Cullable Light Buffer" :
+					type == light_buffer::culling_info ? L"Light Culling Info Buffer" : L"Bounding Spheres Buffer");
 
 				D3D12_RANGE range{};
 				DXCall(_buffers[type].buffer.buffer()->Map(0, &range, (void**)(&_buffers[type].cpu_address)));
@@ -857,6 +896,11 @@ namespace primal::graphics::d3d12::light {
 	D3D12_GPU_VIRTUAL_ADDRESS culling_info_buffer(u32 frame_index) {
 		const d3d12_light_buffer& light_buffer{ light_buffers[frame_index] };
 		return light_buffer.culling_info();
+	}
+
+	D3D12_GPU_VIRTUAL_ADDRESS bounding_spheres_buffer(u32 frame_index) {
+		const d3d12_light_buffer& light_buffer{ light_buffers[frame_index] };
+		return light_buffer.bounding_spheres();
 	}
 
 	u32 non_cullable_light_count(u64 light_set_key) {

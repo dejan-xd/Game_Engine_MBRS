@@ -51,7 +51,7 @@ namespace {
 		}
 		else if (type == graphics::light::spot) {
 			info.spot_params.range = 2.f;
-			info.spot_params.umbra = 0.7f * math::pi;
+			info.spot_params.umbra = 0.1f * math::pi;
 			info.spot_params.penumbra = info.spot_params.umbra + (0.1f * math::pi);
 			info.spot_params.attenuation = { 1, 1, 1 };
 		}

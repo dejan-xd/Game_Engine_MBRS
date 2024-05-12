@@ -17,6 +17,7 @@ ConstantBuffer<GlobalShaderData> GlobalData : register(b0, space0);
 ConstantBuffer<LightCullingDispatchParameters> ShaderParams : register(b1, space0);
 StructuredBuffer<Frustum> Frustums : register(t0, space0);
 StructuredBuffer<LightCullingLightInfo> Lights : register(t1, space0);
+StructuredBuffer<Sphere> BoundingSpheres : register(t2, space0);
 
 RWStructuredBuffer<uint> LightIndexCounter : register(u0, space0);
 RWStructuredBuffer<uint2> LightGrid_Opaque : register(u1, space0);
@@ -37,6 +38,19 @@ Sphere GetConeBoundingSphere(float3 tip, float range, float3 direction, float co
     }
 
     return sphere;
+}
+
+bool Intersects(Frustum frustum, Sphere sphere, float minDepth, float maxDepth)
+{
+    if ((sphere.Center.z - sphere.Radius > minDepth) || (sphere.Center.z + sphere.Radius < maxDepth))
+        return false;
+
+    const float3 lightRejection = sphere.Center - dot(sphere.Center, frustum.ConeDirection) * frustum.ConeDirection;
+    const float distSq = dot(lightRejection, lightRejection);
+    const float radius = sphere.Center.z * frustum.UnitRadius + sphere.Radius;
+    const float radiusSq = radius * radius;
+
+    return distSq <= radiusSq;
 }
 
 // NOTE: TILE_SIZE is defined by the engine at compile-time.
@@ -82,18 +96,10 @@ void CullLightsCS(ComputeShaderInput csIn)
 
     for (i = csIn.GroupIndex; i < ShaderParams.NumLights; i += TILE_SIZE * TILE_SIZE)
     {
-        const LightCullingLightInfo light = Lights[i];
-        const float3 lightPositionVS = mul(GlobalData.View, float4(light.Position, 1.f)).xyz;
+        Sphere sphere = BoundingSpheres[i];
+        sphere.Center = mul(GlobalData.View, float4(sphere.Center, 1.f)).xyz;
         
-        Sphere sphere = { lightPositionVS, light.Range };
-
-        if (light.Type == LIGHT_TYPE_SPOTLIGHT)
-        {
-            const float3 lightDirectionVS = mul(GlobalData.View, float4(light.Direction, 0.f)).xyz;
-            sphere = GetConeBoundingSphere(lightPositionVS, light.Range, lightDirectionVS, light.CosPenumbra);
-        }
-        
-        if (SphereInsideFrustum(sphere, frustum, minDepthVS, maxDepthVS))
+        if (Intersects(frustum, sphere, minDepthVS, maxDepthVS))
         {
             InterlockedAdd(_lightCount, 1, index);
             if (index < MaxLightsPerGroup)

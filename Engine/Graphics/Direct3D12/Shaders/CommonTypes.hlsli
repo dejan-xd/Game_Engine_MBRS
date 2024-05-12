@@ -61,6 +61,14 @@ struct ComputeShaderInput
 };
 #endif
 
+#if USE_BOUNDING_SPHERES
+// Frustum cone in view space
+struct Frustum
+{
+    float3 ConeDirection;
+    float UnitRadius;
+};
+#else
 // View frustum planes (in view space)
 // Plane order: left, right, top, bottom
 // Front and back planes are computed in light culling compute shader.
@@ -68,6 +76,7 @@ struct Frustum
 {
     Plane Planes[4];
 };
+#endif
 
 struct LightCullingDispatchParameters
 {
