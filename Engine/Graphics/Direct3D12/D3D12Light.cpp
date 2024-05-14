@@ -244,6 +244,10 @@ namespace primal::graphics::d3d12::light {
 				_cullable_lights[index].Range = range;
 				_culling_info[index].Range = range;
 
+#if USE_BOUNDING_SPHERES
+				_culling_info[index].CosPenumbra = -1.f;
+#endif
+
 				_bounding_spheres[index].Radius = range;
 				make_dirty(index);
 
@@ -435,7 +439,7 @@ namespace primal::graphics::d3d12::light {
 				hlsl::LightCullingLightInfo& culling_info{ _culling_info[index] };
 				culling_info.Position = _bounding_spheres[index].Center = params.Position;
 
-				if (params.Type == graphics::light::spot) {
+				if (_owners[_cullable_owners[index]].type == graphics::light::spot) {
 					culling_info.Direction = params.Direction = entity.orientation();
 					calculate_cone_bounding_sphere(params, _bounding_spheres[index]);
 				}
@@ -448,17 +452,21 @@ namespace primal::graphics::d3d12::light {
 				assert(info.type != light::directional && index < _cullable_lights.size());
 
 				hlsl::LightParameters& params{ _cullable_lights[index] };
+
+#if !USE_BOUNDING_SPHERES
 				params.Type = info.type;
 				assert(params.Type < light::count);
+#endif
+
 				params.Color = info.color;
 				params.Intensity = info.intensity;
 
-				if (params.Type == light::point) {
+				if (info.type == light::point) {
 					const point_light_params& p{ info.point_params };
 					params.Attenuation = p.attenuation;
 					params.Range = p.range;
 				}
-				else if (params.Type == light::spot) {
+				else if (info.type == light::spot) {
 					const spot_light_params& p{ info.spot_params };
 					params.Attenuation = p.attenuation;
 					params.Range = p.range;
@@ -477,7 +485,11 @@ namespace primal::graphics::d3d12::light {
 				hlsl::LightCullingLightInfo& culling_info{ _culling_info[index] };
 				culling_info.Range = _bounding_spheres[index].Radius = params.Range;
 
+#if USE_BOUNDING_SPHERES
+				culling_info.CosPenumbra = -1.f;
+#else
 				culling_info.Type = params.Type;
+#endif
 
 				if (info.type == light::spot) {
 #if USE_BOUNDING_SPHERES

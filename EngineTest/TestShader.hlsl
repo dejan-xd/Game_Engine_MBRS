@@ -205,6 +205,24 @@ PixelOut TestShaderPS(in VertexOut psIn)
     uint lightStartIndex = LightGrid[gridIndex].x;
     const uint lightCount = LightGrid[gridIndex].y;
     
+#if USE_BOUNDING_SPHERES
+    const uint numPointLights = lightStartIndex + (lightCount >> 16);
+    const uint numSpotlights = numPointLights + (lightCount & 0xffff);
+
+    for (i = lightStartIndex; i < numPointLights; ++i)
+    {
+        const uint lightIndex = LightIndexList[i];
+        LightParameters light = CullableLights[lightIndex];
+        color += PointLight(normal, psIn.WorldPosition, viewDir, light);
+    }
+
+    for (i = numPointLights; i < numSpotlights; ++i)
+    {
+        const uint lightIndex = LightIndexList[i];
+        LightParameters light = CullableLights[lightIndex];
+        color += Spotlight(normal, psIn.WorldPosition, viewDir, light);
+    }
+#else
     for (i = 0; i < lightCount; ++i)
     {
         const uint lightIndex = LightIndexList[lightStartIndex + i];
@@ -219,7 +237,8 @@ PixelOut TestShaderPS(in VertexOut psIn)
             color += Spotlight(normal, psIn.WorldPosition, viewDir, light);
         }
     }
-
+#endif
+    
     float3 ambient = 0 / 255.f;
     psOut.Color = saturate(float4(color + ambient, 1.f));
 

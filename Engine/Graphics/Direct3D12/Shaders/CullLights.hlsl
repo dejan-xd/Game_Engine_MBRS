@@ -12,6 +12,9 @@ groupshared uint _maxDepthVS; // tile's maximum depth in view-space
 groupshared uint _lightCount; // number of lights that affect pixels in this tile
 groupshared uint _lightIndexStartOffset; // offset in the global light index list where we copy _lightIndexList
 groupshared uint _lightIndexList[MaxLightsPerGroup]; // indices of lights that affect this tile
+groupshared uint _lightFlagsOpaque[MaxLightsPerGroup]; // flags the lights in the tile that are actually affecting pixels
+groupshared uint _spotlightStartOffset;
+groupshared uint2 _opaqueLightIndex; // x for point lights and y for spotlights
 
 ConstantBuffer<GlobalShaderData> GlobalData : register(b0, space0);
 ConstantBuffer<LightCullingDispatchParameters> ShaderParams : register(b1, space0);
@@ -71,20 +74,34 @@ void CullLightsCS(ComputeShaderInput csIn)
         _minDepthVS = 0x7f7fffff; // FLT_MAX as uint
         _maxDepthVS = 0;
         _lightCount = 0;
+        _opaqueLightIndex = 0;
     }
 
-    uint i = 0, index = 0; // reusable index variables.
+    uint i = 0, index = 0; // reusable index variables
+
+    for (i = csIn.GroupIndex; i < MaxLightsPerGroup; i += TILE_SIZE * TILE_SIZE)
+    {
+        _lightFlagsOpaque[i] = 0;
+    }
     
     // DEPTH MIN/MAX SECTION
     GroupMemoryBarrierWithGroupSync();
     
     if (depth != 0) // Don't include far plane (depth == 0 is mapped to far-plane)
     {
-        // Negate depth because of right-handed coorinates (negative z-axis).
-        // This make the comparisons easier to understand.
-        const uint z = asuint(D / (depth + C)); // -depthVS as uint
-        InterlockedMin(_minDepthVS, z);
-        InterlockedMax(_maxDepthVS, z);
+        // swap min/max because of reversed depth
+        const float depthMin = WaveActiveMax(depth);
+        const float depthMax = WaveActiveMin(depth);
+        
+        if (WaveIsFirstLane())
+        {
+            // Negate depth because of right-handed coorinates (negative z-axis)
+            // This make the comparisons easier to understand.
+            const uint zMin = asuint(D / (depthMin + C)); // -minDepthVS as uint
+            const uint zMax = asuint(D / (depthMax + C)); // -maxDepthVS as uint
+            InterlockedMin(_minDepthVS, zMin);
+            InterlockedMax(_maxDepthVS, zMax);
+        }
     }
     
     // LIGHT CULLING SECTION
@@ -107,25 +124,70 @@ void CullLightsCS(ComputeShaderInput csIn)
         }
     }
     
-    // UPDATE LIGHT GRID SECTION
+    // LIGHT PRUNING SECTION
     GroupMemoryBarrierWithGroupSync();
     
     const uint lightCount = min(_lightCount, MaxLightsPerGroup);
+    const float2 invViewDimensions = 1.f / float2(GlobalData.ViewWidth, GlobalData.ViewHeight);
+    // Get world position of this pixel
+    const float3 pos = UnprojectUV(csIn.DispatchThreadID.xy * invViewDimensions, depth, GlobalData.InvViewProjection).xyz;
+    
+    for (i = 0; i < lightCount; ++i)
+    {
+        index = _lightIndexList[i];
+        const LightCullingLightInfo light = Lights[index];
+        const float3 d = pos - light.Position;
+        const float distSq = dot(d, d);
 
+        if (distSq <= light.Range * light.Range)
+        {
+            // NOTE: -1 meant the light is a point light. It's a spotlight otherwise.
+            const bool isPointLight = light.CosPenumbra == -1.f;
+            if (isPointLight || (dot(d * rsqrt(distSq), light.Direction) >= light.CosPenumbra))
+            {
+                _lightFlagsOpaque[i] = 2 - uint(isPointLight);
+            }
+        }
+    }
+
+    // UPDATE LIGHT GRID SECTION
+    GroupMemoryBarrierWithGroupSync();
+    
     if (csIn.GroupIndex == 0)
     {
-        InterlockedAdd(LightIndexCounter[0], lightCount, _lightIndexStartOffset);
-        LightGrid_Opaque[gridIndex] = uint2(_lightIndexStartOffset, lightCount);
+        uint numPointLights = 0;
+        uint numSpotlights = 0;
+
+        for (i = 0; i < lightCount; ++i)
+        {
+            numPointLights += (_lightFlagsOpaque[i] & 1);
+            numSpotlights += (_lightFlagsOpaque[i] >> 1);
+        }
+
+        InterlockedAdd(LightIndexCounter[0], numPointLights + numSpotlights, _lightIndexStartOffset);
+        _spotlightStartOffset = _lightIndexStartOffset + numPointLights;
+        LightGrid_Opaque[gridIndex] = uint2(_lightIndexStartOffset, (numPointLights << 16) | numSpotlights);
     }
     
     // UPDATE LIGHT INDEX LIST SECTION
     GroupMemoryBarrierWithGroupSync();
     
+    uint pointIndex, spotIndex;
+
     for (i = csIn.GroupIndex; i < lightCount; i += TILE_SIZE * TILE_SIZE)
     {
-        LightIndexList_Opaque[_lightIndexStartOffset + i] = _lightIndexList[i];
+        if (_lightFlagsOpaque[i] == 1)
+        {
+            InterlockedAdd(_opaqueLightIndex.x, 1, pointIndex);
+            LightIndexList_Opaque[_lightIndexStartOffset + pointIndex] = _lightIndexList[i];
+
+        }
+        else if (_lightFlagsOpaque[i] == 2)
+        {
+            InterlockedAdd(_opaqueLightIndex.y, 1, spotIndex);
+            LightIndexList_Opaque[_spotlightStartOffset + spotIndex] = _lightIndexList[i];
+        }
     }
-    
 }
 
 #else
@@ -237,6 +299,5 @@ void CullLightsCS(ComputeShaderInput csIn)
     {
         LightIndexList_Opaque[_lightIndexStartOffset + i] = _lightIndexList[i];
     }
-    
 }
 #endif

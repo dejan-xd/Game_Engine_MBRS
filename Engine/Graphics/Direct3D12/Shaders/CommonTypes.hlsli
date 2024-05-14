@@ -102,13 +102,13 @@ struct LightCullingLightInfo
     float3 Direction;
     
 #if USE_BOUNDING_SPHERES
+    // If this is set to -1 then the light is a point light
     float CosPenumbra;
 #else
     float ConeRadius;
-#endif
-    
     uint Type;
     float3 _pad;
+#endif
 };
 
 // Contains light data that's formatted and ready to be copied to a D3D constant/structured buffer as a contiguous chunk.
@@ -117,13 +117,16 @@ struct LightParameters
     float3 Position;
     float Intensity;
     float3 Direction;
-    uint Type;
-    float3 Color;
     float Range;
-    float3 Attenuation;
+    float3 Color;
     float CosUmbra; // cosine of the half angle of umbra
+    float3 Attenuation;
     float CosPenumbra; // cosine of the half angle of penumbra
+    
+#if !USE_BOUNDING_SPHERES
+    uint Type;
     float3 _pad;
+#endif
 };
 
 struct DirectionalLightParameters
