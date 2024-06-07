@@ -480,8 +480,6 @@ namespace primal::graphics::d3d12::light {
 				assert(info.type != light::directional && index < _culling_info.size());
 
 				const hlsl::LightParameters& params{ _cullable_lights[index] };
-				assert(params.Type == info.type);
-
 				hlsl::LightCullingLightInfo& culling_info{ _culling_info[index] };
 				culling_info.Range = _bounding_spheres[index].Radius = params.Range;
 

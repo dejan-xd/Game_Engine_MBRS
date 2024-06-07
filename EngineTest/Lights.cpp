@@ -113,9 +113,9 @@ void generate_lights() {
 	for (s32 x{ -dim }; x < dim; ++x) {
 		for (s32 y{ 0 }; y < 2 * dim; ++y) {
 			for (s32 z{ -dim }; z < dim; ++z) {
-				create_light({ (f32)(x * scale.x), (f32)(y * scale.y), (f32)(z * scale.z) }, { 3.14f, random(), 0.f },
+				create_light({ (f32)(x * scale.x), (f32)(y * scale.y), (f32)(z * scale.z) }, { random() * 3.14f, random() * 3.14f, random() * 3.14f },
 					random() > 0.5f ? graphics::light::spot : graphics::light::point, left_set);
-				create_light({ (f32)(x * scale.x), (f32)(y * scale.y), (f32)(z * scale.z) }, { 3.14f, random(), 0.f },
+				create_light({ (f32)(x * scale.x), (f32)(y * scale.y), (f32)(z * scale.z) }, { random() * 3.14f, random() * 3.14f, random() * 3.14f },
 					random() > 0.5f ? graphics::light::spot : graphics::light::point, right_set);
 			}
 		}

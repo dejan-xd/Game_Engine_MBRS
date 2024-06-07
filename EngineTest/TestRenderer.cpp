@@ -298,7 +298,7 @@ void engine_test::run() {
 	// if ((counter % 90) == 0) light_set_key = (light_set_key + 1) % 2;
 
 	timer.begin();
-	// std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	const f32 dt{ timer.dt_avg() };
 	script::update(dt);
 	// test_lights(dt);

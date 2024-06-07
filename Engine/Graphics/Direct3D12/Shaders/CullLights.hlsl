@@ -61,6 +61,24 @@ bool Intersects(Frustum frustum, Sphere sphere, float minDepth, float maxDepth)
 void CullLightsCS(ComputeShaderInput csIn)
 {
     // INITIALIZATION SECTION
+    // 
+    // For our right-handed coordinate system, column-major projection matrices are:
+    //
+    //      Projection:             Inverse projection:
+    //      | A  0  0  0 |          | 1/A  0   0   0  |
+    //      | 0  B  0  0 |          |  0  1/B  0   0  |
+    //      | 0  0  C  D |          |  0   0   0  -1  |
+    //      | 0  0 -1  0 |          |  0   0  1/D C/D |
+    // 
+    // To transform a position vector v from clip to view-space:
+    // 
+    // q = mul(inverse_projection, v);
+    // v_viewSpace = q / q.w;
+    // 
+    // However, we only need the z-component of v_viewSpace (for v = (0, 0, depth, 1)):
+    // 
+    // v_viewSpace = -D / (depth + C);
+    //
     
     // NOTE: Not an error, leave it be! It has to do something with the DirectXShaderCompiler most likely.
     const float depth = Texture2D(ResourceDescriptorHeap[ShaderParams.DepthBufferSrvIndex])[csIn.DispatchThreadID.xy].r;
