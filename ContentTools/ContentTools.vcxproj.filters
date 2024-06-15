@@ -10,5 +10,9 @@
     <ClCompile Include="PrimitiveMesh.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="FbxImporter.cpp" />
+    <ClCompile Include="TextureImporter.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
